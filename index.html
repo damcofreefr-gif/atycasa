@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0E1B1E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Atipicasa</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg1: #0E1B1E;
+      --bg2: #122428;
+      --surface: rgba(255,255,255,0.05);
+      --surface2: #16292E;
+      --text: #EAF4F0;
+      --accent: #5BE3A9;
+      --accent-dark: #0E1B1E;
+      --border: rgba(255,255,255,0.12);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+      padding: max(16px, env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* En-tête */
+    .header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+    .title-row { display: flex; align-items: center; justify-content: space-between; }
+    .title { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+    .save-status { font-size: 11px; opacity: 0.5; }
+    .save-status.error { color: #E8875B; opacity: 1; }
+    .tabs { display: flex; gap: 6px; }
+    .tab {
+      flex: 1; padding: 9px 0; border-radius: 10px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text); font-weight: 600; font-size: 14px;
+    }
+    .tab.active { background: var(--accent); color: var(--accent-dark); border-color: var(--accent); }
+
+    /* Étages */
+    .floor-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .floor-btn {
+      padding: 5px 12px; border-radius: 999px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text); font-size: 12px;
+    }
+    .floor-btn.active { background: rgba(91,227,169,0.18); border-color: var(--accent); }
+
+    /* Grille */
+    .grid-wrap { background: rgba(0,0,0,0.25); border-radius: 14px; padding: 8px; margin-bottom: 14px; }
+    .grid { display: grid; gap: 0; }
+    .cell {
+      aspect-ratio: 1;
+      background: transparent;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.045);
+      transition: background 0.3s;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cell.zoned { box-shadow: none; }
+    .cell .flower {
+      font-size: clamp(14px, 4.5vw, 24px);
+      line-height: 1;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      pointer-events: none;
+    }
+
+    /* Panneaux */
+    .go-btn {
+      width: 100%; padding: 18px 16px; border-radius: 16px; border: none;
+      background: var(--accent); color: var(--accent-dark);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      box-shadow: 0 6px 24px rgba(91,227,169,0.35);
+    }
+    .go-sub { font-size: 13px; opacity: 0.85; font-weight: 500; }
+    .go-main { font-size: 20px; font-weight: 800; }
+    .hint { font-size: 12px; opacity: 0.5; text-align: center; margin-top: 10px; }
+    .empty-msg { text-align: center; opacity: 0.7; padding: 20px; line-height: 1.5; }
+
+    .brushes { display: flex; flex-wrap: wrap; gap: 8px; }
+    .brush {
+      padding: 8px 14px; border-radius: 10px; border: none;
+      color: var(--accent-dark); font-weight: 700; font-size: 13px;
+    }
+    .brush.selected { outline: 3px solid white; }
+    .brush.util { background: rgba(255,255,255,0.12); color: var(--text); }
+
+    .btn-primary {
+      padding: 12px 18px; border-radius: 12px; border: none;
+      background: var(--accent); color: var(--accent-dark);
+      font-weight: 800; font-size: 15px;
+    }
+    .btn-ghost {
+      padding: 12px 18px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2); background: transparent;
+      color: var(--text); font-weight: 600; font-size: 14px;
+    }
+    .btn-tiny {
+      padding: 2px 8px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text); font-size: 11px;
+    }
+    .full { width: 100%; }
+
+    .form {
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--surface); border-radius: 14px; padding: 14px; margin-top: 10px;
+    }
+    .form input {
+      padding: 10px 12px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.25);
+      color: var(--text); font-size: 15px; outline: none; font-family: inherit;
+    }
+    .type-row { display: flex; gap: 8px; }
+    .type-btn {
+      flex: 1; padding: 10px 8px; border-radius: 10px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text); font-size: 12px;
+    }
+    .type-btn.active { background: rgba(91,227,169,0.18); border-color: var(--accent); }
+    .color-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .color-swatch { width: 32px; height: 32px; border-radius: 8px; border: none; }
+    .color-swatch.selected { outline: 3px solid white; }
+    .form-actions { display: flex; gap: 8px; }
+
+    .zone-list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .zone-card { background: var(--surface); border-radius: 12px; padding: 10px 12px; }
+    .zone-head { display: flex; align-items: center; gap: 10px; }
+    .zone-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+    .zone-name { font-weight: 700; }
+    .zone-meta { font-size: 11px; opacity: 0.55; }
+    .zone-head .btn-tiny { margin-left: auto; }
+    .zone-stats { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.55; margin-top: 4px; }
+
+    .progress-outer {
+      width: 100%; height: 10px; border-radius: 999px;
+      background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 8px;
+    }
+    .progress-inner { height: 100%; border-radius: 999px; transition: width 0.4s; }
+
+    /* Timer plein écran */
+    .timer-screen {
+      position: fixed; inset: 0; z-index: 100;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .timer-label { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6; }
+    .timer-zone { font-size: 26px; font-weight: 700; margin-top: 6px; }
+    .timer-clock { font-size: 64px; font-weight: 800; margin: 24px 0; font-variant-numeric: tabular-nums; }
+    .timer-note { margin-top: 16px; font-size: 13px; opacity: 0.5; max-width: 260px; text-align: center; }
+    .timer-screen .progress-outer { max-width: 320px; }
+
+    /* Arrosoir animé */
+    .can-wrap { position: relative; margin-top: 18px; height: 110px; }
+    .can {
+      transform-origin: 60% 70%;
+      animation: tilt 2.4s ease-in-out infinite;
+    }
+    @keyframes tilt {
+      0%, 100% { transform: rotate(0deg); }
+      35%, 65% { transform: rotate(-14deg); }
+    }
+    .drops { position: absolute; left: -14px; top: 30px; width: 30px; }
+    .drop {
+      position: absolute; font-size: 13px; opacity: 0;
+      animation: fall 2.4s ease-in infinite;
+    }
+    .drop.d2 { left: 10px; animation-delay: 0.35s; }
+    .drop.d3 { left: -6px; animation-delay: 0.7s; }
+    @keyframes fall {
+      0%, 30% { opacity: 0; transform: translateY(0); }
+      40% { opacity: 1; }
+      75% { opacity: 1; transform: translateY(46px); }
+      85%, 100% { opacity: 0; transform: translateY(56px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .can, .drop { animation: none; }
+      .drop { opacity: 0.7; transform: translateY(20px); }
+      .drop.d2, .drop.d3 { display: none; }
+    }
+
+    /* Modales */
+    .overlay {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal {
+      background: var(--surface2); border-radius: 18px; padding: 20px;
+      width: 100%; max-width: 360px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .modal-sub { font-size: 13px; opacity: 0.6; }
+    .modal-title { font-size: 24px; font-weight: 800; margin: 4px 0; }
+    .modal-info { font-size: 14px; opacity: 0.8; }
+    .combo-box {
+      margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+      background: rgba(91,227,169,0.1); font-size: 13px; line-height: 1.4;
+    }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .celebrate-icon { font-size: 40px; text-align: center; }
+    .celebrate-title { font-size: 20px; font-weight: 800; text-align: center; margin: 8px 0; }
+    .celebrate-sub { font-size: 14px; opacity: 0.7; text-align: center; }
+
+    .backup-row { display: flex; gap: 8px; margin-top: 18px; }
+    .backup-row button { flex: 1; font-size: 12px; padding: 10px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-row">
+      <div class="title">🏡 Atipicasa</div>
+      <div class="save-status" id="saveStatus"></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="home">Maison</button>
+      <button class="tab" data-tab="edit">Plan</button>
+      <button class="tab" data-tab="zones">Zones</button>
+    </div>
+  </div>
+
+  <div class="floor-bar" id="floorBar"></div>
+
+  <div class="grid-wrap">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- Onglet Maison -->
+  <div id="panel-home">
+    <div id="homeContent"></div>
+  </div>
+
+  <!-- Onglet Plan -->
+  <div id="panel-edit" class="hidden">
+    <div class="hint" style="text-align:left; margin-bottom:8px;">
+      Choisis un pinceau puis peins les cases (touche ou glisse) :
+    </div>
+    <div class="brushes" id="brushes"></div>
+  </div>
+
+  <!-- Onglet Zones -->
+  <div id="panel-zones" class="hidden">
+    <button class="btn-primary full" id="btnShowForm">+ Créer une zone</button>
+    <div class="form hidden" id="zoneForm">
+      <input type="text" id="fName" placeholder="Nom (Cuisine, Garage…)" maxlength="30">
+      <div class="type-row">
+        <button class="type-btn active" data-type="daily">🔁 Quotidienne · 15 min</button>
+        <button class="type-btn" data-type="expedition">🧗 Expédition · 45 min+</button>
+      </div>
+      <div class="color-row" id="colorRow"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="btnAddZone">Créer</button>
+        <button class="btn-ghost" id="btnCancelForm">Annuler</button>
+      </div>
+    </div>
+    <div class="zone-list" id="zoneList"></div>
+    <div class="backup-row">
+      <button class="btn-ghost" id="btnExport">💾 Exporter mes données</button>
+      <button class="btn-ghost" id="btnImport">📥 Importer</button>
+      <input type="file" id="importFile" accept=".json" class="hidden">
+    </div>
+  </div>
+
+  <!-- Modale proposition -->
+  <div class="overlay hidden" id="proposalOverlay">
+    <div class="modal">
+      <div class="modal-sub">Session proposée</div>
+      <div class="modal-title" id="propName"></div>
+      <div class="modal-info" id="propInfo"></div>
+      <div class="combo-box hidden" id="propCombo"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" style="flex:1" id="btnStart">▶ C'est parti</button>
+        <button class="btn-ghost" id="btnLater">Plus tard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale célébration -->
+  <div class="overlay hidden" id="celebrateOverlay">
+    <div class="modal">
+      <div class="celebrate-icon">🌱</div>
+      <div class="celebrate-title" id="celebrateTitle"></div>
+      <div class="celebrate-sub" id="celebrateSub"></div>
+      <button class="btn-primary full" style="margin-top:18px" id="btnCelebrateOk">👍</button>
+    </div>
+  </div>
+
+  <!-- Écran timer -->
+  <div class="timer-screen hidden" id="timerScreen">
+    <div class="timer-label">Arrosage en cours</div>
+    <div class="timer-zone" id="timerZone"></div>
+    <div class="can-wrap" aria-hidden="true">
+      <svg class="can" viewBox="0 0 120 90" width="110" height="82">
+        <!-- corps -->
+        <rect x="30" y="35" width="50" height="40" rx="8" fill="#5BE3A9"/>
+        <!-- anse -->
+        <path d="M 42 35 Q 55 12 68 35" fill="none" stroke="#5BE3A9" stroke-width="7" stroke-linecap="round"/>
+        <!-- bec -->
+        <path d="M 32 45 L 8 28 L 14 22 L 36 40 Z" fill="#5BE3A9"/>
+        <!-- pomme du bec -->
+        <circle cx="10" cy="24" r="7" fill="#4BC790"/>
+      </svg>
+      <div class="drops">
+        <span class="drop d1">💧</span>
+        <span class="drop d2">💧</span>
+        <span class="drop d3">💧</span>
+      </div>
+    </div>
+    <div class="timer-clock" id="timerClock">15:00</div>
+    <div class="progress-outer"><div class="progress-inner" id="timerProgress"></div></div>
+    <button class="btn-ghost" style="margin-top:32px" id="btnStop">J'arrête là (ça compte !)</button>
+    <div class="timer-note">Même 5 minutes rafraîchissent la zone. Pas de tout ou rien ici.</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
