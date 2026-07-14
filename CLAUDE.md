@@ -1,4 +1,4 @@
-# Atipicasa
+# Atycasa
 
 ## Vision
 PWA mobile de routine de rangement/nettoyage conçue pour un cerveau TDAH.

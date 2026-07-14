@@ -1,15 +1,15 @@
-# 🏡 Atipicasa
+# 🏡 Atycasa
 
 App de routine de rangement et nettoyage en micro-sessions, pensée pour les cerveaux TDAH.
 
 ## Mise en ligne (une seule fois)
 
 1. Crée un compte sur [github.com](https://github.com) si tu n'en as pas.
-2. Crée un nouveau dépôt (bouton **New repository**), nomme-le par exemple `maison`, coche **Public**, puis **Create repository**.
+2. Crée un nouveau dépôt (bouton **New repository**), nomme-le par exemple `atycasa`, coche **Public**, puis **Create repository**.
 3. Sur la page du dépôt, clique **uploading an existing file**, glisse-dépose TOUS les fichiers de ce dossier (y compris le dossier `icons`), puis **Commit changes**.
 4. Va dans **Settings → Pages**, section *Build and deployment* : Source = **Deploy from a branch**, Branch = **main** + dossier **/ (root)**, puis **Save**.
 5. Attends 1-2 minutes. Ton app est en ligne à l'adresse :
-   `https://TON-PSEUDO.github.io/maison/`
+   `https://TON-PSEUDO.github.io/atycasa/`
 
 ## Installation sur ton téléphone
 
