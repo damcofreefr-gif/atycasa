@@ -6,6 +6,16 @@
    Ce script tourne sur TOUTES les pages (index.html + atyclock.html)
    pour que la vérification des rappels et la bannière fonctionnent
    partout ; l'interface du minuteur ne s'active que sur atyclock.html.
+
+   Double nature :
+   - Page autonome (bouton 🕐 de l'en-tête) : reste vierge, rappel
+     sans zoneId.
+   - Pont sessions (bouton "🕐 Me le rappeler" dans la proposition de
+     session) : atyclock.html?zone=..&name=..&color=.. contextualise
+     la page, le rappel créé porte ce zoneId. Au déclenchement, la
+     bannière propose directement d'arroser la zone (fonctions
+     openProposal/state exposées globalement par app.js, lues ici
+     seulement si présentes — jamais supposées disponibles).
    ========================================================= */
 (function () {
   const ATYCLOCK_KEY = "atyclock-v1";
@@ -14,6 +24,11 @@
   const $ = (id) => document.getElementById(id);
   const uid = () => Math.random().toString(36).slice(2, 9);
   const onAtyclockPage = !!$("targetClock");
+
+  const params = new URLSearchParams(location.search);
+  const ctxZoneId = params.get("zone");
+  const ctxZoneName = params.get("name");
+  const ctxZoneColor = params.get("color");
 
   function vibrate(pattern) {
     if (navigator.vibrate) navigator.vibrate(pattern);
@@ -58,7 +73,10 @@
       console.error("Atyclock : sauvegarde impossible", e);
     }
   }
-  function getVierge() {
+  // Le rappel "courant" de cette page : celui de la zone en contexte
+  // (?zone=...), ou le rappel vierge (sans zone) si aucun contexte.
+  function getCurrentReminder() {
+    if (ctxZoneId) return astate.reminders.find((r) => r.zoneId === ctxZoneId) || null;
     return astate.reminders.find((r) => !r.zoneId) || null;
   }
 
@@ -83,7 +101,8 @@
       ".atyclock-banner.show{transform:translateY(0);}" +
       ".atyclock-banner .txt{flex:1;font-size:14px;line-height:1.4;color:var(--text,#EAF4F0);}" +
       ".atyclock-banner button{background:transparent;border:none;color:var(--accent,#5BE3A9);" +
-      "font-weight:700;font-size:13px;padding:6px;cursor:pointer;}" +
+      "font-weight:700;font-size:13px;padding:6px;cursor:pointer;white-space:nowrap;}" +
+      ".atyclock-banner button.hidden{display:none;}" +
       "@media (prefers-reduced-motion: reduce){.atyclock-banner{transition:none;}}";
     document.head.appendChild(style);
   }
@@ -94,17 +113,42 @@
     el = document.createElement("div");
     el.id = "atyclockBanner";
     el.className = "atyclock-banner";
-    el.innerHTML = '<div class="txt"></div><button type="button">OK</button>';
-    el.querySelector("button").onclick = () => el.classList.remove("show");
+    el.innerHTML =
+      '<div class="txt"></div>' +
+      '<button type="button" class="action hidden"></button>' +
+      '<button type="button" class="close">OK</button>';
+    el.querySelector(".close").onclick = () => el.classList.remove("show");
     document.body.appendChild(el);
     return el;
   }
-  function showBanner(text) {
+  function showBanner(text, action) {
     const el = ensureBannerEl();
     el.querySelector(".txt").textContent = text;
+    const actionBtn = el.querySelector(".action");
+    if (action) {
+      actionBtn.textContent = action.label;
+      actionBtn.classList.remove("hidden");
+      actionBtn.onclick = action.onClick;
+    } else {
+      actionBtn.classList.add("hidden");
+      actionBtn.onclick = null;
+    }
     el.classList.add("show");
     clearTimeout(bannerTimer);
     bannerTimer = setTimeout(() => el.classList.remove("show"), 8000);
+  }
+
+  // Ouvre la proposition de session pour une zone : directement si
+  // app.js est chargé sur cette page (index.html), sinon on y navigue.
+  function goToProposal(zoneId) {
+    if (typeof openProposal === "function" && typeof state !== "undefined" && state.zones) {
+      const z = state.zones.find((zz) => zz.id === zoneId);
+      if (z) {
+        openProposal(z);
+        return;
+      }
+    }
+    location.href = "index.html?openZone=" + encodeURIComponent(zoneId);
   }
 
   // ---------- Vérification des rappels dus ----------
@@ -114,7 +158,7 @@
     let dirty = false;
     astate.reminders = astate.reminders.filter((r) => {
       if (r.targetTime > now) return true;
-      due.push(r.targetTime);
+      due.push({ originalTarget: r.targetTime, zoneId: r.zoneId, zoneName: r.zoneName });
       dirty = true;
       if (r.isDaily) {
         while (r.targetTime <= now) r.targetTime += 86400000;
@@ -123,14 +167,29 @@
       return false;
     });
     if (dirty) saveAtyclockState();
-    due.forEach((originalTarget) => notifyDue(originalTarget, now));
+    due.forEach((d) => notifyDue(d, now));
     if (onAtyclockPage) renderTarget();
   }
-  function notifyDue(originalTarget, now) {
-    const late = now - originalTarget > CHECK_INTERVAL_MS * 2;
-    const text = late ? "🕐 Un rappel est passé" : "🕐 C'est l'heure";
+  function notifyDue(d, now) {
+    const late = now - d.originalTarget > CHECK_INTERVAL_MS * 2;
+    let zoneName = d.zoneName;
+    let zoneConfirmed = !!d.zoneId;
+    // On ne peut vérifier l'existence actuelle de la zone que si app.js
+    // (state.zones) est chargé sur cette page — sinon on fait confiance
+    // au nom mémorisé sur le rappel, sans jamais afficher d'erreur.
+    if (d.zoneId && typeof state !== "undefined" && state.zones) {
+      const z = state.zones.find((zz) => zz.id === d.zoneId);
+      zoneConfirmed = !!z;
+      if (z) zoneName = z.name;
+    }
+    const hasZone = d.zoneId && zoneConfirmed;
+    const text = hasZone
+      ? `🕐 C'est l'heure — arroser ${zoneName} ?`
+      : late
+      ? "🕐 Un rappel est passé"
+      : "🕐 C'est l'heure";
     vibrate([80, 40, 80]);
-    showBanner(text);
+    showBanner(text, hasZone ? { label: "Arroser", onClick: () => goToProposal(d.zoneId) } : null);
     if ("Notification" in window && Notification.permission === "granted") {
       try {
         new Notification("Atycasa", { body: text, icon: "icons/icon-192.png" });
@@ -161,23 +220,66 @@
   const launchBtn = $("btnAtyclock");
   if (launchBtn) launchBtn.onclick = () => { location.href = "atyclock.html"; };
 
+  // Pont sessions : bouton "Me le rappeler" dans la modale de proposition
+  // (index.html uniquement — ui/state existent forcément si ce bouton existe).
+  const remindBtn = $("btnRemind");
+  if (remindBtn) {
+    remindBtn.onclick = () => {
+      if (!ui.proposal) return;
+      const zone = state.zones.find((z) => z.id === ui.proposal.zoneId);
+      $("proposalOverlay").classList.add("hidden");
+      if (!zone) {
+        location.href = "atyclock.html";
+        return;
+      }
+      const qs = new URLSearchParams({ zone: zone.id, name: zone.name, color: zone.color.replace("#", "") });
+      location.href = "atyclock.html?" + qs.toString();
+    };
+  }
+
+  // Ouverture directe d'une proposition suite à un clic "Arroser" dans
+  // la bannière (index.html uniquement ; silencieux si la zone n'existe
+  // plus — pas d'erreur, conforme à la règle anti-culpabilité).
+  (function handleOpenZoneParam() {
+    const openZoneId = params.get("openZone");
+    if (!openZoneId) return;
+    if (typeof openProposal === "function" && typeof state !== "undefined" && state.zones) {
+      const z = state.zones.find((zz) => zz.id === openZoneId);
+      if (z) openProposal(z);
+    }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, "", location.pathname);
+    }
+  })();
+
   // ---------- Interface du minuteur (atyclock.html uniquement) ----------
   if (!onAtyclockPage) return;
 
   (function syncPendingFromStorage() {
-    const r = getVierge();
+    const r = getCurrentReminder();
     if (r) {
       pendingTarget = r.targetTime;
       pendingDaily = r.isDaily;
     }
   })();
 
+  function renderZoneContext() {
+    const el = $("zoneContext");
+    if (!ctxZoneId || !ctxZoneName) {
+      el.classList.add("hidden");
+      return;
+    }
+    $("zoneLabel").textContent = `Pour ${ctxZoneName}`;
+    $("zoneDot").style.background = ctxZoneColor ? "#" + ctxZoneColor : "var(--accent)";
+    el.classList.remove("hidden");
+  }
+
   function renderNow() {
     $("nowClock").textContent = formatClock(new Date());
   }
 
   function renderTarget() {
-    const r = getVierge();
+    const r = getCurrentReminder();
     const active = !!r;
     if (active) {
       pendingTarget = r.targetTime;
@@ -207,7 +309,7 @@
 
   function addOffset(minutes, label) {
     pendingTarget += minutes * 60000;
-    const r = getVierge();
+    const r = getCurrentReminder();
     if (r) {
       r.targetTime = pendingTarget;
       saveAtyclockState();
@@ -219,9 +321,16 @@
 
   function armReminder() {
     ensureNotifPermission();
-    let r = getVierge();
+    let r = getCurrentReminder();
     if (!r) {
-      r = { id: uid(), targetTime: pendingTarget, isDaily: pendingDaily, zoneId: null, createdAt: Date.now() };
+      r = {
+        id: uid(),
+        targetTime: pendingTarget,
+        isDaily: pendingDaily,
+        zoneId: ctxZoneId || null,
+        zoneName: ctxZoneId ? ctxZoneName : null,
+        createdAt: Date.now(),
+      };
       astate.reminders.push(r);
     } else {
       r.targetTime = pendingTarget;
@@ -234,7 +343,7 @@
 
   function toggleDaily() {
     pendingDaily = !pendingDaily;
-    const r = getVierge();
+    const r = getCurrentReminder();
     if (r) {
       r.isDaily = pendingDaily;
       saveAtyclockState();
@@ -244,7 +353,7 @@
   }
 
   function cancelReminder() {
-    const r = getVierge();
+    const r = getCurrentReminder();
     if (!r) return;
     astate.reminders = astate.reminders.filter((x) => x.id !== r.id);
     saveAtyclockState();
@@ -282,6 +391,7 @@
     row.addEventListener("pointercancel", clear);
   }
 
+  renderZoneContext();
   renderNow();
   renderTarget();
   setInterval(renderNow, 1000);

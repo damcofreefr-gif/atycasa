@@ -37,9 +37,21 @@ par des sessions chronométrées).
 - Code source d'origine : le projet React Native/Expo "heho2", dont le
   comportement a servi de spec pour une réécriture intégrale en vanilla
   JS (aucune dépendance ni code conservés).
+- Double nature :
+  - Page autonome — accès via le bouton 🕐 de l'en-tête, atyclock.html
+    reste vierge (rappel sans zoneId).
+  - Pont sessions — bouton "🕐 Me le rappeler" dans la modale de
+    proposition (à côté de "Plus tard") : ouvre
+    atyclock.html?zone=..&name=..&color=.. pré-contextualisé, le nom et
+    la couleur de la zone sont affichés sur la page, et le rappel créé
+    porte ce zoneId + zoneName. Au déclenchement, la bannière propose
+    directement la session ("🕐 C'est l'heure — arroser [zone] ?") avec
+    un bouton qui ouvre la proposition ; si la zone a été supprimée
+    entre-temps, bannière neutre sans erreur ni mention de zone.
 - Données : localStorage clé "atyclock-v1", {reminders: [{id, targetTime,
-  isDaily, zoneId, createdAt}], notifAsked}. Migration automatique depuis
-  l'ancienne clé "heho-v1" au premier chargement si elle existe.
+  isDaily, zoneId, zoneName, createdAt}], notifAsked}. Migration
+  automatique depuis l'ancienne clé "heho-v1" au premier chargement si
+  elle existe.
 - Notifications : la permission navigateur n'est demandée qu'au tout
   premier "Programmer", jamais à l'ouverture de l'app ; si refusée, on ne
   la redemande plus jamais (l'app retombe en mode bannière + vibration

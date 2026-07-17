@@ -48,6 +48,12 @@
       box-shadow: 0 12px 40px rgba(0,0,0,0.5);
     }
 
+    .zone-context {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 16px; font-size: 13px; opacity: 0.9;
+    }
+    .zone-context .zone-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+
     .now-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.5; text-align: center; }
     .now-clock {
       font-size: 26px; font-weight: 700; text-align: center; margin-top: 4px;
@@ -116,6 +122,11 @@
   </div>
 
   <div class="card">
+    <div class="zone-context hidden" id="zoneContext">
+      <span class="zone-dot" id="zoneDot"></span>
+      <span id="zoneLabel"></span>
+    </div>
+
     <div class="now-label">Il est</div>
     <div class="now-clock" id="nowClock">--:--</div>
 
