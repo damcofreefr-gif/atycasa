@@ -28,6 +28,28 @@ par des sessions chronométrées).
   suggère en complément (rentabiliser le déplacement).
 - Fleur au centre de chaque zone : 🌸 ≥70 % → 🌷 ≥45 % → 🥀 ≥20 % → 🍂 <20 %.
 
+## Atyclock (tap timer)
+- Rappel programmable accessible via le bouton 🕐 dans l'en-tête d'Atycasa.
+  Fichiers atyclock.html + atyclock.js (mêmes contraintes vanilla que le
+  reste de l'app) ; atyclock.js est aussi chargé par index.html pour que
+  la vérification des rappels et la bannière fonctionnent sur toutes les
+  pages, pas seulement sur atyclock.html.
+- Code source d'origine : le projet React Native/Expo "heho2", dont le
+  comportement a servi de spec pour une réécriture intégrale en vanilla
+  JS (aucune dépendance ni code conservés).
+- Données : localStorage clé "atyclock-v1", {reminders: [{id, targetTime,
+  isDaily, zoneId, createdAt}], notifAsked}. Migration automatique depuis
+  l'ancienne clé "heho-v1" au premier chargement si elle existe.
+- Notifications : la permission navigateur n'est demandée qu'au tout
+  premier "Programmer", jamais à l'ouverture de l'app ; si refusée, on ne
+  la redemande plus jamais (l'app retombe en mode bannière + vibration
+  uniquement).
+- Rappel quotidien : se réarme automatiquement pour la prochaine
+  occurrence future, même après plusieurs jours d'absence — jamais de
+  rattrapage en rafale. La règle anti-dette du CLAUDE.md (voir Règles
+  produit) s'applique aussi à Atyclock : un rappel manqué n'est jamais
+  présenté comme un échec ou un retard.
+
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
   Déploiement = push des fichiers statiques tels quels sur GitHub Pages.

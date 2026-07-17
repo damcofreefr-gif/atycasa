@@ -2,13 +2,13 @@
    Avantage : chaque push sur GitHub met l'app à jour dès la prochaine
    ouverture avec connexion, et l'app reste utilisable hors ligne. */
 
-const CACHE = "maison-v3";
+const CACHE = "maison-v4";
 const ASSETS = [
   "./",
   "./index.html",
   "./app.js",
-  "./heho.html",
-  "./heho.js",
+  "./atyclock.html",
+  "./atyclock.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

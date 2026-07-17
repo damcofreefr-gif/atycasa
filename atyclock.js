@@ -1,16 +1,19 @@
 /* =========================================================
-   Heho — tap timer / rappels programmables
-   Données : localStorage (clé "heho-v1")
-   Ce script tourne sur TOUTES les pages (index.html + heho.html)
+   Atyclock — tap timer / rappels programmables
+   (nom de code d'origine : Heho, projet source heho2)
+   Données : localStorage (clé "atyclock-v1"), avec migration
+   automatique depuis l'ancienne clé "heho-v1" si elle existe.
+   Ce script tourne sur TOUTES les pages (index.html + atyclock.html)
    pour que la vérification des rappels et la bannière fonctionnent
-   partout ; l'interface du minuteur ne s'active que sur heho.html.
+   partout ; l'interface du minuteur ne s'active que sur atyclock.html.
    ========================================================= */
 (function () {
-  const HEHO_KEY = "heho-v1";
+  const ATYCLOCK_KEY = "atyclock-v1";
+  const LEGACY_HEHO_KEY = "heho-v1";
   const CHECK_INTERVAL_MS = 15000;
   const $ = (id) => document.getElementById(id);
   const uid = () => Math.random().toString(36).slice(2, 9);
-  const onHehoPage = !!$("targetClock");
+  const onAtyclockPage = !!$("targetClock");
 
   function vibrate(pattern) {
     if (navigator.vibrate) navigator.vibrate(pattern);
@@ -24,30 +27,42 @@
   }
 
   // ---------- Persistance ----------
-  function loadHehoState() {
+  function migrateLegacyKey() {
     try {
-      const raw = localStorage.getItem(HEHO_KEY);
+      const legacy = localStorage.getItem(LEGACY_HEHO_KEY);
+      if (legacy !== null && localStorage.getItem(ATYCLOCK_KEY) === null) {
+        localStorage.setItem(ATYCLOCK_KEY, legacy);
+      }
+      if (legacy !== null) localStorage.removeItem(LEGACY_HEHO_KEY);
+    } catch (e) {
+      console.error("Atyclock : migration heho-v1 impossible", e);
+    }
+  }
+  function loadAtyclockState() {
+    migrateLegacyKey();
+    try {
+      const raw = localStorage.getItem(ATYCLOCK_KEY);
       if (raw) {
         const d = JSON.parse(raw);
         if (Array.isArray(d.reminders)) return d;
       }
     } catch (e) {
-      console.error("Heho : chargement impossible", e);
+      console.error("Atyclock : chargement impossible", e);
     }
     return { reminders: [], notifAsked: false };
   }
-  function saveHehoState() {
+  function saveAtyclockState() {
     try {
-      localStorage.setItem(HEHO_KEY, JSON.stringify(hstate));
+      localStorage.setItem(ATYCLOCK_KEY, JSON.stringify(astate));
     } catch (e) {
-      console.error("Heho : sauvegarde impossible", e);
+      console.error("Atyclock : sauvegarde impossible", e);
     }
   }
   function getVierge() {
-    return hstate.reminders.find((r) => !r.zoneId) || null;
+    return astate.reminders.find((r) => !r.zoneId) || null;
   }
 
-  let hstate = loadHehoState();
+  let astate = loadAtyclockState();
   // Déclarés ici (et non plus bas, près de leur usage) car checkReminders()
   // peut appeler renderTarget() dès l'init partagée, avant que le bloc
   // "interface du minuteur" ne s'exécute.
@@ -56,29 +71,29 @@
 
   // ---------- Bannière (toutes les pages) ----------
   function injectBannerStyle() {
-    if ($("hehoBannerStyle")) return;
+    if ($("atyclockBannerStyle")) return;
     const style = document.createElement("style");
-    style.id = "hehoBannerStyle";
+    style.id = "atyclockBannerStyle";
     style.textContent =
-      ".heho-banner{position:fixed;left:14px;right:14px;top:max(14px,env(safe-area-inset-top));" +
+      ".atyclock-banner{position:fixed;left:14px;right:14px;top:max(14px,env(safe-area-inset-top));" +
       "z-index:200;background:var(--surface2,#16292E);border:1px solid var(--accent,#5BE3A9);" +
       "border-radius:14px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" +
       "display:flex;align-items:center;gap:10px;transform:translateY(-140%);" +
       "transition:transform 0.3s ease;font-family:'Avenir Next','Segoe UI',system-ui,sans-serif;}" +
-      ".heho-banner.show{transform:translateY(0);}" +
-      ".heho-banner .txt{flex:1;font-size:14px;line-height:1.4;color:var(--text,#EAF4F0);}" +
-      ".heho-banner button{background:transparent;border:none;color:var(--accent,#5BE3A9);" +
+      ".atyclock-banner.show{transform:translateY(0);}" +
+      ".atyclock-banner .txt{flex:1;font-size:14px;line-height:1.4;color:var(--text,#EAF4F0);}" +
+      ".atyclock-banner button{background:transparent;border:none;color:var(--accent,#5BE3A9);" +
       "font-weight:700;font-size:13px;padding:6px;cursor:pointer;}" +
-      "@media (prefers-reduced-motion: reduce){.heho-banner{transition:none;}}";
+      "@media (prefers-reduced-motion: reduce){.atyclock-banner{transition:none;}}";
     document.head.appendChild(style);
   }
   let bannerTimer = null;
   function ensureBannerEl() {
-    let el = $("hehoBanner");
+    let el = $("atyclockBanner");
     if (el) return el;
     el = document.createElement("div");
-    el.id = "hehoBanner";
-    el.className = "heho-banner";
+    el.id = "atyclockBanner";
+    el.className = "atyclock-banner";
     el.innerHTML = '<div class="txt"></div><button type="button">OK</button>';
     el.querySelector("button").onclick = () => el.classList.remove("show");
     document.body.appendChild(el);
@@ -97,7 +112,7 @@
     const now = Date.now();
     const due = [];
     let dirty = false;
-    hstate.reminders = hstate.reminders.filter((r) => {
+    astate.reminders = astate.reminders.filter((r) => {
       if (r.targetTime > now) return true;
       due.push(r.targetTime);
       dirty = true;
@@ -107,9 +122,9 @@
       }
       return false;
     });
-    if (dirty) saveHehoState();
+    if (dirty) saveAtyclockState();
     due.forEach((originalTarget) => notifyDue(originalTarget, now));
-    if (onHehoPage) renderTarget();
+    if (onAtyclockPage) renderTarget();
   }
   function notifyDue(originalTarget, now) {
     const late = now - originalTarget > CHECK_INTERVAL_MS * 2;
@@ -126,9 +141,9 @@
   }
   function ensureNotifPermission() {
     if (!("Notification" in window)) return;
-    if (hstate.notifAsked) return;
-    hstate.notifAsked = true;
-    saveHehoState();
+    if (astate.notifAsked) return;
+    astate.notifAsked = true;
+    saveAtyclockState();
     if (Notification.permission === "default") {
       try {
         Notification.requestPermission();
@@ -143,11 +158,11 @@
   checkReminders();
   setInterval(checkReminders, CHECK_INTERVAL_MS);
 
-  const launchBtn = $("btnHeho");
-  if (launchBtn) launchBtn.onclick = () => { location.href = "heho.html"; };
+  const launchBtn = $("btnAtyclock");
+  if (launchBtn) launchBtn.onclick = () => { location.href = "atyclock.html"; };
 
-  // ---------- Interface du minuteur (heho.html uniquement) ----------
-  if (!onHehoPage) return;
+  // ---------- Interface du minuteur (atyclock.html uniquement) ----------
+  if (!onAtyclockPage) return;
 
   (function syncPendingFromStorage() {
     const r = getVierge();
@@ -195,7 +210,7 @@
     const r = getVierge();
     if (r) {
       r.targetTime = pendingTarget;
-      saveHehoState();
+      saveAtyclockState();
     }
     vibrate(20);
     showOffsetBadge(label);
@@ -207,12 +222,12 @@
     let r = getVierge();
     if (!r) {
       r = { id: uid(), targetTime: pendingTarget, isDaily: pendingDaily, zoneId: null, createdAt: Date.now() };
-      hstate.reminders.push(r);
+      astate.reminders.push(r);
     } else {
       r.targetTime = pendingTarget;
       r.isDaily = pendingDaily;
     }
-    saveHehoState();
+    saveAtyclockState();
     vibrate([20, 30, 20]);
     renderTarget();
   }
@@ -222,7 +237,7 @@
     const r = getVierge();
     if (r) {
       r.isDaily = pendingDaily;
-      saveHehoState();
+      saveAtyclockState();
     }
     vibrate(20);
     renderTarget();
@@ -231,8 +246,8 @@
   function cancelReminder() {
     const r = getVierge();
     if (!r) return;
-    hstate.reminders = hstate.reminders.filter((x) => x.id !== r.id);
-    saveHehoState();
+    astate.reminders = astate.reminders.filter((x) => x.id !== r.id);
+    saveAtyclockState();
     pendingTarget = Date.now();
     pendingDaily = false;
     vibrate(20);
