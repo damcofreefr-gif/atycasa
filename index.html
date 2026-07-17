@@ -42,7 +42,12 @@
     /* En-tête */
     .header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
     .title-row { display: flex; align-items: center; justify-content: space-between; }
+    .title-group { display: flex; align-items: center; gap: 8px; }
     .title { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+    .heho-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 4px 8px; font-size: 15px; opacity: 0.75;
+    }
     .save-status { font-size: 11px; opacity: 0.5; }
     .save-status.error { color: #E8875B; opacity: 1; }
     .tabs { display: flex; gap: 6px; }
@@ -227,7 +232,10 @@
 <body>
   <div class="header">
     <div class="title-row">
-      <div class="title">🏡 Atycasa</div>
+      <div class="title-group">
+        <div class="title">🏡 Atycasa</div>
+        <button class="heho-btn" id="btnHeho" aria-label="Heho, rappels programmés">🕐</button>
+      </div>
       <div class="save-status" id="saveStatus"></div>
     </div>
     <div class="tabs">
@@ -331,5 +339,6 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="heho.js"></script>
 </body>
 </html>

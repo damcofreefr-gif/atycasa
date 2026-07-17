@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0E1B1E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Heho · Atycasa</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg1: #0E1B1E;
+      --bg2: #122428;
+      --surface2: #16292E;
+      --text: #EAF4F0;
+      --accent: #5BE3A9;
+      --accent-dark: #0E1B1E;
+      --border: rgba(255,255,255,0.12);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+      padding: max(16px, env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .hidden { display: none !important; }
+
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .back-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 8px 12px; font-size: 16px;
+    }
+    .h-title { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+
+    .card {
+      background: var(--surface2); border-radius: 18px; padding: 26px 20px;
+      width: 100%; max-width: 420px; margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .now-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.5; text-align: center; }
+    .now-clock {
+      font-size: 26px; font-weight: 700; text-align: center; margin-top: 4px;
+      font-variant-numeric: tabular-nums; opacity: 0.7;
+    }
+
+    .target-block { text-align: center; margin-top: 22px; }
+    .target-label { font-size: 13px; opacity: 0.6; }
+    .target-clock {
+      font-size: 58px; font-weight: 800; margin-top: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .badge-slot { min-height: 40px; display: flex; align-items: center; justify-content: center; margin-top: 8px; }
+    .offset-badge {
+      padding: 8px 16px; border-radius: 999px; background: var(--accent); color: var(--accent-dark);
+      font-weight: 700; font-size: 13px; opacity: 0; transform: translateY(8px) scale(0.9);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .offset-badge.show { opacity: 1; transform: translateY(0) scale(1); }
+
+    .offset-row { display: flex; gap: 10px; margin-top: 18px; }
+    .offset-btn {
+      flex: 1; padding: 16px; border-radius: 14px; border: none;
+      font-weight: 700; font-size: 16px; color: #10221D; min-height: 56px;
+    }
+    .offset-btn.b5 { background: #5BB8E3; }
+    .offset-btn.b60 { background: #8BE85B; }
+    .offset-btn:active { transform: scale(0.97); }
+
+    .program-btn {
+      width: 100%; margin-top: 22px; border-radius: 16px; min-height: 74px;
+      padding: 14px 16px; background: rgba(91,227,169,0.12); border: 1px solid var(--accent);
+      text-align: center;
+    }
+    .program-btn.daily { background: rgba(91,135,200,0.15); border-color: #5B87C8; }
+    .program-title { font-weight: 800; font-size: 16px; }
+    .program-hint { font-size: 12px; opacity: 0.6; margin-top: 4px; }
+
+    .status-row {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-top: 18px; padding: 10px; border-radius: 999px;
+    }
+    .status-row.active { background: rgba(91,227,169,0.1); }
+    .status-dot { width: 10px; height: 10px; border-radius: 999px; background: #8a8f8c; }
+    .status-row.active .status-dot { background: var(--accent); }
+    .status-text { font-size: 14px; font-weight: 600; }
+
+    .daily-note { text-align: center; font-size: 12px; color: #5B87C8; margin-top: 8px; }
+
+    .cancel-row { text-align: center; margin-top: 12px; }
+    .btn-ghost-small {
+      padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+      background: transparent; color: var(--text); font-size: 13px; opacity: 0.85;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .offset-badge { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" id="btnBack" aria-label="Retour">←</button>
+    <div class="h-title">🕐 Heho</div>
+  </div>
+
+  <div class="card">
+    <div class="now-label">Il est</div>
+    <div class="now-clock" id="nowClock">--:--</div>
+
+    <div class="target-block">
+      <div class="target-label">Rappel à</div>
+      <div class="target-clock" id="targetClock">--:--</div>
+    </div>
+
+    <div class="badge-slot"><div class="offset-badge" id="offsetBadge"></div></div>
+
+    <div class="offset-row">
+      <button class="offset-btn b5" id="btnPlus5">+5 min</button>
+      <button class="offset-btn b60" id="btnPlus60">+1h</button>
+    </div>
+
+    <button class="program-btn" id="btnProgram">
+      <div class="program-title">Programmer</div>
+      <div class="program-hint" id="programHint">Appui long pour un rappel quotidien 🔁</div>
+    </button>
+
+    <div class="status-row" id="statusRow">
+      <div class="status-dot"></div>
+      <div class="status-text" id="statusText">En attente</div>
+    </div>
+    <div class="daily-note hidden" id="dailyNote">🔁 Rappel quotidien</div>
+
+    <div class="cancel-row">
+      <button class="btn-ghost-small hidden" id="btnCancel">Annuler le rappel</button>
+    </div>
+  </div>
+
+  <script src="heho.js"></script>
+</body>
+</html>
