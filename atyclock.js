@@ -254,13 +254,15 @@
     location.href = "index.html?openZone=" + encodeURIComponent(zoneId);
   }
 
-  // Petit point sur le bouton 🕐 de l'en-tête d'Atycasa (index.html
-  // uniquement — absent des autres pages, d'où le garde-fou) signalant
-  // qu'au moins un rappel est programmé.
-  function renderAtyclockDot() {
-    const dot = $("atyclockDot");
-    if (!dot) return;
-    dot.classList.toggle("hidden", astate.reminders.length === 0);
+  // Le bouton 🕐 de l'en-tête d'Atycasa (index.html uniquement — absent
+  // des autres pages, d'où le garde-fou) pulse dès qu'au moins un rappel
+  // est programmé. Un simple point était trop discret, surtout pour la
+  // maison (voir plus bas) : une icône qui respire se repère bien plus
+  // facilement du coin de l'œil.
+  function renderAtyclockPulse() {
+    const btn = $("btnAtyclock");
+    if (!btn) return;
+    btn.classList.toggle("pulse", astate.reminders.length > 0);
   }
 
   // Même principe en miroir sur le bouton 🏡 (atyclock.html uniquement) :
@@ -285,10 +287,10 @@
       return false;
     }
   }
-  function renderHouseDot() {
-    const dot = $("houseDot");
-    if (!dot) return;
-    dot.classList.toggle("hidden", !anyZoneThirsty());
+  function renderHousePulse() {
+    const btn = $("btnBack");
+    if (!btn) return;
+    btn.classList.toggle("pulse", anyZoneThirsty());
   }
 
   // ---------- Vérification des rappels dus ----------
@@ -309,8 +311,8 @@
     if (dirty) saveAtyclockState();
     due.forEach((d) => notifyDue(d, now));
     if (onAtyclockPage) renderTarget();
-    renderAtyclockDot();
-    renderHouseDot();
+    renderAtyclockPulse();
+    renderHousePulse();
   }
   function notifyDue(d, now) {
     const late = now - d.originalTarget > CHECK_INTERVAL_MS * 2;

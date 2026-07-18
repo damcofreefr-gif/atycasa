@@ -30,14 +30,15 @@ par des sessions chronométrées).
 
 ## Atyclock (tap timer)
 - Rappel programmable accessible via le bouton 🕐 dans l'en-tête d'Atycasa.
-  Un petit point vert apparaît sur ce bouton dès qu'au moins un rappel
-  est programmé (n'importe lequel, pas seulement celui de la zone
-  courante), pour signaler sa présence sans avoir à ouvrir Atyclock. En
-  miroir, le bouton 🏡 (retour à l'accueil) dans l'en-tête d'atyclock.html
-  affiche le même point dès qu'une zone a une fraîcheur < 50 % —
-  atyclock.js lit directement le localStorage "maison-v1" (app.js n'est
-  pas chargé sur cette page) en réappliquant la même formule de
-  fraîcheur que app.js, pour rester en lecture seule sans dépendance.
+  Ce bouton pulse (agrandissement + halo, classe .pulse, respecte
+  prefers-reduced-motion) dès qu'au moins un rappel est programmé
+  (n'importe lequel, pas seulement celui de la zone courante) — un
+  simple point était trop discret. En miroir, le bouton 🏡 (retour à
+  l'accueil) dans l'en-tête d'atyclock.html pulse dès qu'une zone a une
+  fraîcheur < 50 % — atyclock.js lit directement le localStorage
+  "maison-v1" (app.js n'est pas chargé sur cette page) en réappliquant
+  la même formule de fraîcheur que app.js, pour rester en lecture seule
+  sans dépendance.
   Fichiers atyclock.html + atyclock.js (mêmes contraintes vanilla que le
   reste de l'app) ; atyclock.js est aussi chargé par index.html pour que
   la vérification des rappels, la bannière et ces points fonctionnent

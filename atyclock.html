@@ -42,14 +42,19 @@
 
     .header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
     .back-btn {
-      position: relative;
       border: 1px solid var(--border); background: transparent; color: var(--text);
       border-radius: 10px; padding: 8px 12px; font-size: 16px;
     }
-    .house-dot {
-      position: absolute; top: 2px; right: 2px; width: 8px; height: 8px;
-      border-radius: 999px; background: var(--accent);
-      box-shadow: 0 0 0 2px var(--bg1);
+    @keyframes icon-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(91,227,169,0.55); }
+      50% { transform: scale(1.18); box-shadow: 0 0 0 7px rgba(91,227,169,0); }
+    }
+    .back-btn.pulse {
+      border-color: var(--accent);
+      animation: icon-pulse 1.7s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .back-btn.pulse { animation: none; }
     }
     .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
 
@@ -147,7 +152,7 @@
 <body>
   <div class="header">
     <div class="h-title">🕐 Atyclock</div>
-    <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡<span class="house-dot hidden" id="houseDot"></span></button>
+    <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡</button>
   </div>
 
   <div class="card">
