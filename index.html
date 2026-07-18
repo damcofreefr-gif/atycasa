@@ -42,7 +42,7 @@
     /* En-tête */
     .header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
     .title-row { display: flex; align-items: center; justify-content: space-between; }
-    .title-group { display: flex; align-items: center; gap: 8px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
     .title { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
     .atyclock-btn {
       position: relative;
@@ -238,11 +238,11 @@
 <body>
   <div class="header">
     <div class="title-row">
-      <div class="title-group">
-        <div class="title">🏡 Atycasa</div>
+      <div class="title">🏡 Atycasa</div>
+      <div class="header-right">
+        <div class="save-status" id="saveStatus"></div>
         <button class="atyclock-btn" id="btnAtyclock" aria-label="Atyclock, rappels programmés">🕐<span class="atyclock-dot hidden" id="atyclockDot"></span></button>
       </div>
-      <div class="save-status" id="saveStatus"></div>
     </div>
     <div class="tabs">
       <button class="tab active" data-tab="home">Maison</button>
