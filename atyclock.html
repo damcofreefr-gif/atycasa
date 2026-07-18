@@ -24,7 +24,7 @@
       -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
       -ms-user-select: none; user-select: none;
     }
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
     body {
       min-height: 100vh;
       min-height: 100dvh;
@@ -33,14 +33,18 @@
       background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
       color: var(--text);
       font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
-      padding: max(10px, env(safe-area-inset-top)) 14px calc(10px + env(safe-area-inset-bottom));
+      padding: max(14px, env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
       touch-action: manipulation;
       overscroll-behavior: none;
+      /* Dimensionné pour tenir sans scroll sur les écrans courants
+         (375px de large et plus) ; le scroll naturel reste un filet
+         de sécurité sur les très petits écrans plutôt que de tasser
+         l'interface pour eux. */
     }
     button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .hidden { display: none !important; }
 
-    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
     .back-btn {
       border: 1px solid var(--border); background: transparent; color: var(--text);
       border-radius: 10px; padding: 8px 12px; font-size: 16px;
@@ -59,7 +63,7 @@
     .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
 
     .card {
-      background: var(--surface2); border-radius: 18px; padding: 12px 20px;
+      background: var(--surface2); border-radius: 20px; padding: 20px 22px;
       width: 100%; max-width: 420px; margin: 0 auto;
       box-shadow: 0 12px 40px rgba(0,0,0,0.5);
       flex: 1;
@@ -67,7 +71,7 @@
       display: flex;
       flex-direction: column;
     }
-    .card-spacer { flex: 1; min-height: 8px; }
+    .card-spacer { flex: 1; min-height: 10px; }
 
     .zone-context {
       display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -80,12 +84,12 @@
       text-align: center; transition: opacity 0.2s; min-height: 14px;
     }
     .now-clock {
-      font-size: 66px; font-weight: 800; text-align: center; margin-top: 5px;
+      font-size: 64px; font-weight: 800; text-align: center; margin-top: 6px;
       font-variant-numeric: tabular-nums; transition: color 0.2s;
     }
     .now-clock.preview { color: var(--accent); }
 
-    .badge-slot { min-height: 32px; display: flex; align-items: center; justify-content: center; margin-top: 3px; }
+    .badge-slot { min-height: 32px; display: flex; align-items: center; justify-content: center; margin-top: 6px; }
     .offset-badge {
       padding: 8px 16px; border-radius: 999px; background: var(--accent); color: var(--accent-dark);
       font-weight: 700; font-size: 13px; opacity: 0; transform: translateY(8px) scale(0.9);
@@ -93,10 +97,10 @@
     }
     .offset-badge.show { opacity: 1; transform: translateY(0) scale(1); }
 
-    .offset-row { display: flex; flex-direction: column; gap: 4px; margin-top: 5px; }
+    .offset-row { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
     .offset-btn {
-      width: 100%; padding: 7px; border-radius: 14px; border: none;
-      font-weight: 700; font-size: 15px; color: #10221D; min-height: 32px;
+      width: 100%; padding: 12px; border-radius: 14px; border: none;
+      font-weight: 700; font-size: 16px; color: #10221D; min-height: 46px;
     }
     .offset-btn.b1 { background: #B98BE8; }
     .offset-btn.b5 { background: #5BB8E3; }
@@ -104,29 +108,31 @@
     .offset-btn.b60 { background: #8BE85B; }
     .offset-btn:active { transform: scale(0.97); }
 
-    .program-wrap { position: relative; margin-top: 10px; }
+    .program-wrap { position: relative; margin-top: 18px; }
     .program-btn {
-      width: 100%; border-radius: 16px 16px 0 0; min-height: 96px;
-      padding: 16px 54px 16px 16px; background: rgba(91,227,169,0.12);
+      width: 100%; border-radius: 18px 18px 0 0; min-height: 88px;
+      padding: 16px 58px 16px 20px; background: rgba(91,227,169,0.12);
       border: 1px solid var(--accent); border-bottom: none;
       text-align: center; color: var(--text);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px;
     }
     .program-btn.daily { background: rgba(91,135,200,0.15); border-color: #5B87C8; }
-    .program-title { font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
+    .program-title { font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1; }
     .program-title #programLabel { color: var(--accent); }
     .program-btn.daily .program-title #programLabel { color: #5B87C8; }
-    .program-hint { font-size: 13px; opacity: 0.75; margin-top: 6px; }
+    .program-hint { font-size: 13px; opacity: 0.75; }
     .program-wrap .bell-btn {
-      position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+      position: absolute; top: 14px; right: 12px;
       border: 1px solid var(--border); background: transparent; color: var(--text);
       border-radius: 10px; padding: 8px 10px; font-size: 16px; opacity: 0.6;
     }
     .program-wrap .bell-btn.on { border-color: var(--accent); opacity: 1; }
-    .program-wrap .bell-btn:active { transform: translateY(-50%) scale(0.95); }
+    .program-wrap .bell-btn:active { transform: scale(0.95); }
 
     .status-row {
       display: flex; align-items: center; justify-content: center; gap: 10px;
-      padding: 5px; border-radius: 0 0 16px 16px;
+      padding: 10px; border-radius: 0 0 18px 18px;
       border: 1px solid var(--accent); border-top: none;
       background: rgba(91,227,169,0.05);
     }
@@ -138,9 +144,9 @@
     .status-row.daily.active .status-dot { background: #5B87C8; }
     .status-text { font-size: 14px; font-weight: 600; }
 
-    .cancel-row { margin-top: 4px; }
+    .cancel-row { margin-top: 10px; }
     .btn-ghost-small {
-      width: 100%; min-height: 33px; padding: 6px 16px; border-radius: 14px;
+      width: 100%; min-height: 42px; padding: 10px 16px; border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.2); background: transparent;
       color: var(--text); font-size: 14px; font-weight: 600; opacity: 0.85;
     }
