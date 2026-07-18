@@ -313,7 +313,7 @@
     $("statusRow").classList.toggle("daily", pendingDaily);
   }
 
-  const PREVIEW_MS = 3200;
+  const PREVIEW_MS = 5000;
 
   let badgeTimer = null;
   function showOffsetBadge(label) {
@@ -326,6 +326,11 @@
     badgeTimer = setTimeout(() => el.classList.remove("show"), PREVIEW_MS);
   }
 
+  // Tant que la programmation n'est pas validée (bouton Programmer non
+  // appuyé), le cumul de taps n'est que provisoire : dès que l'aperçu
+  // revient à l'heure actuelle sans validation, tout est remis à zéro.
+  // Si un rappel est déjà actif, les taps l'ont déjà mis à jour en
+  // direct dans le stockage : rien à réinitialiser dans ce cas.
   let previewTimer = null;
   function showTargetPreview() {
     previewing = true;
@@ -338,6 +343,11 @@
       $("nowLabel").textContent = "";
       $("nowClock").classList.remove("preview");
       renderNow();
+      if (!getCurrentReminder()) {
+        pendingTarget = Date.now();
+        baseTarget = pendingTarget;
+        renderTarget();
+      }
     }, PREVIEW_MS);
   }
 
