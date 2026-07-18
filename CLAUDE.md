@@ -100,3 +100,12 @@ par des sessions chronométrées).
 - python n'est pas installé sur cette machine (stub Windows Store
   uniquement) ; le port 8000 est occupé par un autre projet Node —
   toujours utiliser 8080.
+
+## Avant publication
+- Reparler avec l'utilisateur d'un vrai widget Android (écran d'accueil)
+  quand l'app sera prête à être publiée. Pas possible en PWA pure : il
+  faudrait empaqueter Atycasa en Trusted Web Activity (Bubblewrap) pour
+  un APK installable, puis écrire un App Widget natif (Kotlin,
+  AppWidgetProvider) publié sur le Play Store — un vrai projet natif à
+  part, hors du cadre vanilla JS actuel. Ne pas lancer ça spontanément :
+  l'utilisateur doit d'abord juger l'app prête.
