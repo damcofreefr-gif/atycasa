@@ -396,6 +396,7 @@
   renderTarget();
   setInterval(renderNow, 1000);
   $("btnPlus5").onclick = () => addOffset(5, "+5 min");
+  $("btnPlus30").onclick = () => addOffset(30, "+30 min");
   $("btnPlus60").onclick = () => addOffset(60, "+1h");
   $("btnCancel").onclick = cancelReminder;
   $("btnBack").onclick = () => { location.href = "index.html"; };
