@@ -262,6 +262,16 @@
       pendingDaily = r.isDaily;
     }
   })();
+  // Référence à partir de laquelle on affiche le cumul des taps sur les
+  // boutons d'offset (+5/+15 min/+1h) ; remise à zéro à chaque
+  // programmation ou annulation, pour repartir d'un cumul propre.
+  let baseTarget = pendingTarget;
+  function formatOffsetTotal(minutes) {
+    if (minutes < 60) return `+${minutes} min`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m === 0 ? `+${h}h` : `+${h}h${String(m).padStart(2, "0")}`;
+  }
 
   function renderZoneContext() {
     const el = $("zoneContext");
@@ -303,6 +313,8 @@
     $("statusRow").classList.toggle("daily", pendingDaily);
   }
 
+  const PREVIEW_MS = 3200;
+
   let badgeTimer = null;
   function showOffsetBadge(label) {
     const el = $("offsetBadge");
@@ -311,7 +323,7 @@
     void el.offsetWidth; // relance la transition
     el.classList.add("show");
     clearTimeout(badgeTimer);
-    badgeTimer = setTimeout(() => el.classList.remove("show"), 1800);
+    badgeTimer = setTimeout(() => el.classList.remove("show"), PREVIEW_MS);
   }
 
   let previewTimer = null;
@@ -326,10 +338,10 @@
       $("nowLabel").textContent = "";
       $("nowClock").classList.remove("preview");
       renderNow();
-    }, 1800);
+    }, PREVIEW_MS);
   }
 
-  function addOffset(minutes, label) {
+  function addOffset(minutes) {
     pendingTarget += minutes * 60000;
     const r = getCurrentReminder();
     if (r) {
@@ -337,7 +349,8 @@
       saveAtyclockState();
     }
     vibrate(20);
-    showOffsetBadge(label);
+    const cumulated = Math.round((pendingTarget - baseTarget) / 60000);
+    showOffsetBadge(formatOffsetTotal(cumulated));
     showTargetPreview();
     renderTarget();
   }
@@ -360,6 +373,7 @@
       r.isDaily = pendingDaily;
     }
     saveAtyclockState();
+    baseTarget = pendingTarget;
     vibrate([20, 30, 20]);
     renderTarget();
   }
@@ -382,6 +396,7 @@
     saveAtyclockState();
     pendingTarget = Date.now();
     pendingDaily = false;
+    baseTarget = pendingTarget;
     vibrate(20);
     renderTarget();
   }
@@ -418,9 +433,9 @@
   renderNow();
   renderTarget();
   setInterval(renderNow, 1000);
-  $("btnPlus5").onclick = () => addOffset(5, "+5 min");
-  $("btnPlus15").onclick = () => addOffset(15, "+15 min");
-  $("btnPlus60").onclick = () => addOffset(60, "+1h");
+  $("btnPlus5").onclick = () => addOffset(5);
+  $("btnPlus15").onclick = () => addOffset(15);
+  $("btnPlus60").onclick = () => addOffset(60);
   $("btnCancel").onclick = cancelReminder;
   $("btnBack").onclick = () => { location.href = "index.html"; };
   bindProgramButton();
