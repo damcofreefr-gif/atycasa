@@ -333,6 +333,7 @@
       pendingTarget = r.targetTime;
       pendingDaily = r.isDaily;
     }
+    $("programLabel").textContent = active ? "Rappel à" : "Programmer à";
     $("programTime").textContent = formatClock(new Date(pendingTarget));
     $("statusRow").classList.toggle("active", active);
     $("statusText").textContent = active ? "Actif" : "En attente";
