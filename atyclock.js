@@ -20,6 +20,7 @@
 (function () {
   const ATYCLOCK_KEY = "atyclock-v1";
   const LEGACY_HEHO_KEY = "heho-v1";
+  const MAISON_KEY = "maison-v1";
   const CHECK_INTERVAL_MS = 15000;
   const $ = (id) => document.getElementById(id);
   const uid = () => Math.random().toString(36).slice(2, 9);
@@ -262,6 +263,34 @@
     dot.classList.toggle("hidden", astate.reminders.length === 0);
   }
 
+  // Même principe en miroir sur le bouton 🏡 (atyclock.html uniquement) :
+  // lecture directe du localStorage "maison-v1" (app.js n'est pas chargé
+  // sur cette page), avec la même formule de fraîcheur que app.js. Seuil
+  // <50 % repris de la logique combo existante ("zone qui vaut le coup").
+  function anyZoneThirsty() {
+    try {
+      const raw = localStorage.getItem(MAISON_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (!Array.isArray(s.zones)) return false;
+      const now = Date.now();
+      return s.zones.some((z) => {
+        const decayMs = (z.decayDays || 1) * (1 + 0.15 * (z.level || 0)) * 86400000;
+        const elapsed = now - (z.freshAt || now);
+        const lost = (elapsed / decayMs) * 100;
+        const fresh = Math.max(0, Math.min(100, (z.freshBase ?? 100) - lost));
+        return fresh < 50;
+      });
+    } catch (e) {
+      return false;
+    }
+  }
+  function renderHouseDot() {
+    const dot = $("houseDot");
+    if (!dot) return;
+    dot.classList.toggle("hidden", !anyZoneThirsty());
+  }
+
   // ---------- Vérification des rappels dus ----------
   function checkReminders() {
     const now = Date.now();
@@ -281,6 +310,7 @@
     due.forEach((d) => notifyDue(d, now));
     if (onAtyclockPage) renderTarget();
     renderAtyclockDot();
+    renderHouseDot();
   }
   function notifyDue(d, now) {
     const late = now - d.originalTarget > CHECK_INTERVAL_MS * 2;
