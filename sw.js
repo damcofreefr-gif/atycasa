@@ -2,7 +2,7 @@
    Avantage : chaque push sur GitHub met l'app à jour dès la prochaine
    ouverture avec connexion, et l'app reste utilisable hors ligne. */
 
-const CACHE = "maison-v37";
+const CACHE = "maison-v38";
 const ASSETS = [
   "./",
   "./index.html",
