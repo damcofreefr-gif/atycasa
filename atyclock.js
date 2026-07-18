@@ -345,6 +345,7 @@
       if (!getCurrentReminder()) {
         pendingTarget = Date.now();
         baseTarget = pendingTarget;
+        pendingDaily = false;
         renderTarget();
       }
     }, PREVIEW_MS);
