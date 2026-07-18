@@ -33,6 +33,37 @@
   function vibrate(pattern) {
     if (navigator.vibrate) navigator.vibrate(pattern);
   }
+  // Alarme sonore en attendant des vraies notifications push fiables : trois
+  // bips générés à la volée (aucun fichier audio à embarquer). Best-effort
+  // seulement — les navigateurs bloquent l'audio sans interaction récente
+  // de l'utilisateur, d'où le silencieux en cas d'échec.
+  function playAlarm() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const start = ctx.currentTime;
+      const beep = (at, freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, at);
+        gain.gain.linearRampToValueAtTime(0.3, at + 0.02);
+        gain.gain.linearRampToValueAtTime(0, at + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(at);
+        osc.stop(at + 0.4);
+      };
+      beep(start, 880);
+      beep(start + 0.45, 880);
+      beep(start + 0.9, 1046.5);
+      setTimeout(() => ctx.close(), 1600);
+    } catch (e) {
+      // silencieux : lecture audio bloquée par le navigateur
+    }
+  }
   function formatClock(date) {
     return new Intl.DateTimeFormat("fr-FR", {
       hour: "2-digit",
@@ -189,6 +220,7 @@
       ? "🕐 Un rappel est passé"
       : "🕐 C'est l'heure";
     vibrate([80, 40, 80]);
+    playAlarm();
     showBanner(text, hasZone ? { label: "Arroser", onClick: () => goToProposal(d.zoneId) } : null);
     if ("Notification" in window && Notification.permission === "granted") {
       try {
