@@ -79,10 +79,10 @@
     }
     .offset-badge.show { opacity: 1; transform: translateY(0) scale(1); }
 
-    .offset-row { display: flex; gap: 8px; margin-top: 18px; }
+    .offset-row { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
     .offset-btn {
-      flex: 1; padding: 16px 4px; border-radius: 14px; border: none;
-      font-weight: 700; font-size: 15px; color: #10221D; min-height: 56px;
+      width: 100%; padding: 16px; border-radius: 14px; border: none;
+      font-weight: 700; font-size: 16px; color: #10221D; min-height: 56px;
     }
     .offset-btn.b5 { background: #5BB8E3; }
     .offset-btn.b15 { background: #E8C05B; }
@@ -90,8 +90,9 @@
     .offset-btn:active { transform: scale(0.97); }
 
     .program-btn {
-      width: 100%; margin-top: 22px; border-radius: 16px; min-height: 74px;
-      padding: 14px 16px; background: rgba(91,227,169,0.12); border: 1px solid var(--accent);
+      width: 100%; margin-top: 22px; border-radius: 16px 16px 0 0; min-height: 74px;
+      padding: 14px 16px; background: rgba(91,227,169,0.12);
+      border: 1px solid var(--accent); border-bottom: none;
       text-align: center; color: var(--text);
     }
     .program-btn.daily { background: rgba(91,135,200,0.15); border-color: #5B87C8; }
@@ -100,11 +101,16 @@
 
     .status-row {
       display: flex; align-items: center; justify-content: center; gap: 10px;
-      margin-top: 18px; padding: 10px; border-radius: 999px;
+      padding: 12px; border-radius: 0 0 16px 16px;
+      border: 1px solid var(--accent); border-top: none;
+      background: rgba(91,227,169,0.05);
     }
     .status-row.active { background: rgba(91,227,169,0.1); }
+    .status-row.daily { border-color: #5B87C8; background: rgba(91,135,200,0.08); }
+    .status-row.daily.active { background: rgba(91,135,200,0.15); }
     .status-dot { width: 10px; height: 10px; border-radius: 999px; background: #8a8f8c; }
     .status-row.active .status-dot { background: var(--accent); }
+    .status-row.daily.active .status-dot { background: #5B87C8; }
     .status-text { font-size: 14px; font-weight: 600; }
 
     .daily-note { text-align: center; font-size: 12px; color: #5B87C8; margin-top: 8px; }
@@ -132,7 +138,7 @@
       <span id="zoneLabel"></span>
     </div>
 
-    <div class="now-label" id="nowLabel">Il est</div>
+    <div class="now-label" id="nowLabel"></div>
     <div class="now-clock" id="nowClock">--:--</div>
 
     <div class="badge-slot"><div class="offset-badge" id="offsetBadge"></div></div>
@@ -143,12 +149,12 @@
       <button class="offset-btn b60" id="btnPlus60">+1h</button>
     </div>
 
+    <div class="card-spacer"></div>
+
     <button class="program-btn" id="btnProgram">
       <div class="program-title">Programmer à <span id="programTime">--:--</span></div>
       <div class="program-hint" id="programHint">Appui long pour un rappel quotidien 🔁</div>
     </button>
-
-    <div class="card-spacer"></div>
 
     <div class="status-row" id="statusRow">
       <div class="status-dot"></div>

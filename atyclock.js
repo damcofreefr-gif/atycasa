@@ -300,6 +300,7 @@
       ? "Mode quotidien activé 🔁"
       : "Appui long pour un rappel quotidien 🔁";
     $("btnProgram").classList.toggle("daily", pendingDaily);
+    $("statusRow").classList.toggle("daily", pendingDaily);
   }
 
   let badgeTimer = null;
@@ -322,7 +323,7 @@
     clearTimeout(previewTimer);
     previewTimer = setTimeout(() => {
       previewing = false;
-      $("nowLabel").textContent = "Il est";
+      $("nowLabel").textContent = "";
       $("nowClock").classList.remove("preview");
       renderNow();
     }, 1800);
