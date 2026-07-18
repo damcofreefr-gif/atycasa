@@ -45,7 +45,13 @@
       border: 1px solid var(--border); background: transparent; color: var(--text);
       border-radius: 10px; padding: 8px 12px; font-size: 16px;
     }
-    .h-title { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+    .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+    .bell-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 8px 12px; font-size: 16px; opacity: 0.6;
+    }
+    .bell-btn.on { border-color: var(--accent); opacity: 1; }
+    .bell-btn:active { transform: scale(0.95); }
 
     .card {
       background: var(--surface2); border-radius: 18px; padding: 18px 20px;
@@ -133,6 +139,7 @@
   <div class="header">
     <button class="back-btn" id="btnBack" aria-label="Retour">←</button>
     <div class="h-title">🕐 Atyclock</div>
+    <button class="bell-btn" id="btnSound" aria-label="Alarme sonore désactivée" title="Appui long pour activer/désactiver l'alarme sonore">🔕</button>
   </div>
 
   <div class="card">

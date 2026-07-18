@@ -49,13 +49,18 @@ par des sessions chronométrées).
     un bouton qui ouvre la proposition ; si la zone a été supprimée
     entre-temps, bannière neutre sans erreur ni mention de zone.
 - Données : localStorage clé "atyclock-v1", {reminders: [{id, targetTime,
-  isDaily, zoneId, zoneName, createdAt}], notifAsked}. Migration
-  automatique depuis l'ancienne clé "heho-v1" au premier chargement si
-  elle existe.
+  isDaily, zoneId, zoneName, createdAt}], notifAsked, soundEnabled}.
+  Migration automatique depuis l'ancienne clé "heho-v1" au premier
+  chargement si elle existe.
 - Notifications : la permission navigateur n'est demandée qu'au tout
   premier "Programmer", jamais à l'ouverture de l'app ; si refusée, on ne
   la redemande plus jamais (l'app retombe en mode bannière + vibration
   uniquement).
+- Alarme sonore (bips générés via Web Audio API, sans fichier audio) au
+  déclenchement d'un rappel : désactivée par défaut (soundEnabled:
+  false), pour rester peu intrusive en attendant de vraies notifications
+  push. Cloche 🔔/🔕 dans l'en-tête d'atyclock.html, appui long pour
+  activer/désactiver ; réglage global, partagé par tous les rappels.
 - Rappel quotidien : se réarme automatiquement pour la prochaine
   occurrence future, même après plusieurs jours d'absence — jamais de
   rattrapage en rafale. La règle anti-dette du CLAUDE.md (voir Règles

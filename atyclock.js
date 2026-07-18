@@ -90,12 +90,18 @@
       const raw = localStorage.getItem(ATYCLOCK_KEY);
       if (raw) {
         const d = JSON.parse(raw);
-        if (Array.isArray(d.reminders)) return d;
+        if (Array.isArray(d.reminders)) {
+          // Alarme sonore désactivée par défaut (principe : peu intrusif,
+          // en attendant de vraies notifications push) ; migration douce
+          // pour les états enregistrés avant l'ajout de ce champ.
+          if (typeof d.soundEnabled !== "boolean") d.soundEnabled = false;
+          return d;
+        }
       }
     } catch (e) {
       console.error("Atyclock : chargement impossible", e);
     }
-    return { reminders: [], notifAsked: false };
+    return { reminders: [], notifAsked: false, soundEnabled: false };
   }
   function saveAtyclockState() {
     try {
@@ -220,7 +226,7 @@
       ? "🕐 Un rappel est passé"
       : "🕐 C'est l'heure";
     vibrate([80, 40, 80]);
-    playAlarm();
+    if (astate.soundEnabled) playAlarm();
     showBanner(text, hasZone ? { label: "Arroser", onClick: () => goToProposal(d.zoneId) } : null);
     if ("Notification" in window && Notification.permission === "granted") {
       try {
@@ -432,6 +438,22 @@
     renderTarget();
   }
 
+  function renderSoundToggle() {
+    const btn = $("btnSound");
+    if (!btn) return;
+    const on = !!astate.soundEnabled;
+    btn.textContent = on ? "🔔" : "🔕";
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-label", on ? "Alarme sonore activée" : "Alarme sonore désactivée");
+  }
+
+  function toggleSound() {
+    astate.soundEnabled = !astate.soundEnabled;
+    saveAtyclockState();
+    vibrate(astate.soundEnabled ? [15, 40, 15] : 15);
+    renderSoundToggle();
+  }
+
   function cancelReminder() {
     const r = getCurrentReminder();
     if (!r) return;
@@ -472,9 +494,23 @@
     row.addEventListener("pointercancel", clear);
   }
 
+  function bindSoundButton() {
+    const btn = $("btnSound");
+    if (!btn) return;
+    let timer = null;
+    const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    btn.addEventListener("pointerdown", () => {
+      timer = setTimeout(toggleSound, 350);
+    });
+    btn.addEventListener("pointerup", clear);
+    btn.addEventListener("pointerleave", clear);
+    btn.addEventListener("pointercancel", clear);
+  }
+
   renderZoneContext();
   renderNow();
   renderTarget();
+  renderSoundToggle();
   setInterval(renderNow, 1000);
   $("btnPlus5").onclick = () => addOffset(5);
   $("btnPlus15").onclick = () => addOffset(15);
@@ -483,4 +519,5 @@
   $("btnBack").onclick = () => { location.href = "index.html"; };
   bindProgramButton();
   bindStatusRow();
+  bindSoundButton();
 })();
