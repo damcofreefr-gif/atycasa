@@ -45,8 +45,14 @@
     .title-group { display: flex; align-items: center; gap: 8px; }
     .title { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
     .atyclock-btn {
+      position: relative;
       border: 1px solid var(--border); background: transparent; color: var(--text);
       border-radius: 10px; padding: 4px 8px; font-size: 15px; opacity: 0.75;
+    }
+    .atyclock-dot {
+      position: absolute; top: 2px; right: 2px; width: 8px; height: 8px;
+      border-radius: 999px; background: var(--accent);
+      box-shadow: 0 0 0 2px var(--bg1);
     }
     .save-status { font-size: 11px; opacity: 0.5; }
     .save-status.error { color: #E8875B; opacity: 1; }
@@ -234,7 +240,7 @@
     <div class="title-row">
       <div class="title-group">
         <div class="title">🏡 Atycasa</div>
-        <button class="atyclock-btn" id="btnAtyclock" aria-label="Atyclock, rappels programmés">🕐</button>
+        <button class="atyclock-btn" id="btnAtyclock" aria-label="Atyclock, rappels programmés">🕐<span class="atyclock-dot hidden" id="atyclockDot"></span></button>
       </div>
       <div class="save-status" id="saveStatus"></div>
     </div>

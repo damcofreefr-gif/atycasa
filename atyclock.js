@@ -228,6 +228,15 @@
     location.href = "index.html?openZone=" + encodeURIComponent(zoneId);
   }
 
+  // Petit point sur le bouton 🕐 de l'en-tête d'Atycasa (index.html
+  // uniquement — absent des autres pages, d'où le garde-fou) signalant
+  // qu'au moins un rappel est programmé.
+  function renderAtyclockDot() {
+    const dot = $("atyclockDot");
+    if (!dot) return;
+    dot.classList.toggle("hidden", astate.reminders.length === 0);
+  }
+
   // ---------- Vérification des rappels dus ----------
   function checkReminders() {
     const now = Date.now();
@@ -246,6 +255,7 @@
     if (dirty) saveAtyclockState();
     due.forEach((d) => notifyDue(d, now));
     if (onAtyclockPage) renderTarget();
+    renderAtyclockDot();
   }
   function notifyDue(d, now) {
     const late = now - d.originalTarget > CHECK_INTERVAL_MS * 2;

@@ -30,10 +30,13 @@ par des sessions chronométrées).
 
 ## Atyclock (tap timer)
 - Rappel programmable accessible via le bouton 🕐 dans l'en-tête d'Atycasa.
+  Un petit point vert apparaît sur ce bouton dès qu'au moins un rappel
+  est programmé (n'importe lequel, pas seulement celui de la zone
+  courante), pour signaler sa présence sans avoir à ouvrir Atyclock.
   Fichiers atyclock.html + atyclock.js (mêmes contraintes vanilla que le
   reste de l'app) ; atyclock.js est aussi chargé par index.html pour que
-  la vérification des rappels et la bannière fonctionnent sur toutes les
-  pages, pas seulement sur atyclock.html.
+  la vérification des rappels, la bannière et ce point fonctionnent sur
+  toutes les pages, pas seulement sur atyclock.html.
 - Code source d'origine : le projet React Native/Expo "heho2", dont le
   comportement a servi de spec pour une réécriture intégrale en vanilla
   JS (aucune dépendance ni code conservés).
