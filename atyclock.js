@@ -275,7 +275,7 @@
   }
 
   // L'horloge du haut affiche l'heure actuelle en temps normal ; le temps
-  // d'un appui sur +5/+30 min/+1h, elle affiche brièvement l'heure du
+  // d'un appui sur +5/+15 min/+1h, elle affiche brièvement l'heure du
   // rappel programmé, puis revient d'elle-même à l'heure actuelle. L'heure
   // du rappel reste, elle, en permanence visible dans le bouton Programmer.
   let previewing = false;
@@ -418,7 +418,7 @@
   renderTarget();
   setInterval(renderNow, 1000);
   $("btnPlus5").onclick = () => addOffset(5, "+5 min");
-  $("btnPlus30").onclick = () => addOffset(30, "+30 min");
+  $("btnPlus15").onclick = () => addOffset(15, "+15 min");
   $("btnPlus60").onclick = () => addOffset(60, "+1h");
   $("btnCancel").onclick = cancelReminder;
   $("btnBack").onclick = () => { location.href = "index.html"; };
