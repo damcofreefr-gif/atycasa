@@ -23,7 +23,7 @@
   const CHECK_INTERVAL_MS = 15000;
   const $ = (id) => document.getElementById(id);
   const uid = () => Math.random().toString(36).slice(2, 9);
-  const onAtyclockPage = !!$("targetClock");
+  const onAtyclockPage = !!$("btnProgram");
 
   const params = new URLSearchParams(location.search);
   const ctxZoneId = params.get("zone");
@@ -274,7 +274,13 @@
     el.classList.remove("hidden");
   }
 
+  // L'horloge du haut affiche l'heure actuelle en temps normal ; le temps
+  // d'un appui sur +5/+30 min/+1h, elle affiche brièvement l'heure du
+  // rappel programmé, puis revient d'elle-même à l'heure actuelle. L'heure
+  // du rappel reste, elle, en permanence visible dans le bouton Programmer.
+  let previewing = false;
   function renderNow() {
+    if (previewing) return;
     $("nowClock").textContent = formatClock(new Date());
   }
 
@@ -285,7 +291,7 @@
       pendingTarget = r.targetTime;
       pendingDaily = r.isDaily;
     }
-    $("targetClock").textContent = formatClock(new Date(pendingTarget));
+    $("programTime").textContent = formatClock(new Date(pendingTarget));
     $("statusRow").classList.toggle("active", active);
     $("statusText").textContent = active ? "Actif" : "En attente";
     $("dailyNote").classList.toggle("hidden", !pendingDaily);
@@ -307,6 +313,21 @@
     badgeTimer = setTimeout(() => el.classList.remove("show"), 1800);
   }
 
+  let previewTimer = null;
+  function showTargetPreview() {
+    previewing = true;
+    $("nowLabel").textContent = "Rappel à";
+    $("nowClock").textContent = formatClock(new Date(pendingTarget));
+    $("nowClock").classList.add("preview");
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => {
+      previewing = false;
+      $("nowLabel").textContent = "Il est";
+      $("nowClock").classList.remove("preview");
+      renderNow();
+    }, 1800);
+  }
+
   function addOffset(minutes, label) {
     pendingTarget += minutes * 60000;
     const r = getCurrentReminder();
@@ -316,6 +337,7 @@
     }
     vibrate(20);
     showOffsetBadge(label);
+    showTargetPreview();
     renderTarget();
   }
 
