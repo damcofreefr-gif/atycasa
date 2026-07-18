@@ -33,14 +33,14 @@
       background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
       color: var(--text);
       font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
-      padding: max(12px, env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+      padding: max(10px, env(safe-area-inset-top)) 14px calc(10px + env(safe-area-inset-bottom));
       touch-action: manipulation;
       overscroll-behavior: none;
     }
     button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .hidden { display: none !important; }
 
-    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
     .back-btn {
       border: 1px solid var(--border); background: transparent; color: var(--text);
       border-radius: 10px; padding: 8px 12px; font-size: 16px;
@@ -54,7 +54,7 @@
     .bell-btn:active { transform: scale(0.95); }
 
     .card {
-      background: var(--surface2); border-radius: 18px; padding: 18px 20px;
+      background: var(--surface2); border-radius: 18px; padding: 16px 20px;
       width: 100%; max-width: 420px; margin: 0 auto;
       box-shadow: 0 12px 40px rgba(0,0,0,0.5);
       flex: 1;
@@ -75,12 +75,12 @@
       text-align: center; transition: opacity 0.2s; min-height: 14px;
     }
     .now-clock {
-      font-size: 46px; font-weight: 800; text-align: center; margin-top: 4px;
+      font-size: 40px; font-weight: 800; text-align: center; margin-top: 3px;
       font-variant-numeric: tabular-nums; transition: color 0.2s;
     }
     .now-clock.preview { color: var(--accent); }
 
-    .badge-slot { min-height: 30px; display: flex; align-items: center; justify-content: center; margin-top: 6px; }
+    .badge-slot { min-height: 26px; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
     .offset-badge {
       padding: 8px 16px; border-radius: 999px; background: var(--accent); color: var(--accent-dark);
       font-weight: 700; font-size: 13px; opacity: 0; transform: translateY(8px) scale(0.9);
@@ -88,19 +88,20 @@
     }
     .offset-badge.show { opacity: 1; transform: translateY(0) scale(1); }
 
-    .offset-row { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .offset-row { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
     .offset-btn {
-      width: 100%; padding: 13px; border-radius: 14px; border: none;
-      font-weight: 700; font-size: 16px; color: #10221D; min-height: 48px;
+      width: 100%; padding: 11px; border-radius: 14px; border: none;
+      font-weight: 700; font-size: 15px; color: #10221D; min-height: 42px;
     }
+    .offset-btn.b1 { background: #B98BE8; }
     .offset-btn.b5 { background: #5BB8E3; }
     .offset-btn.b15 { background: #E8C05B; }
     .offset-btn.b60 { background: #8BE85B; }
     .offset-btn:active { transform: scale(0.97); }
 
     .program-btn {
-      width: 100%; margin-top: 14px; border-radius: 16px 16px 0 0; min-height: 64px;
-      padding: 11px 16px; background: rgba(91,227,169,0.12);
+      width: 100%; margin-top: 11px; border-radius: 16px 16px 0 0; min-height: 58px;
+      padding: 9px 16px; background: rgba(91,227,169,0.12);
       border: 1px solid var(--accent); border-bottom: none;
       text-align: center; color: var(--text);
     }
@@ -110,7 +111,7 @@
 
     .status-row {
       display: flex; align-items: center; justify-content: center; gap: 10px;
-      padding: 10px; border-radius: 0 0 16px 16px;
+      padding: 8px; border-radius: 0 0 16px 16px;
       border: 1px solid var(--accent); border-top: none;
       background: rgba(91,227,169,0.05);
     }
@@ -122,11 +123,11 @@
     .status-row.daily.active .status-dot { background: #5B87C8; }
     .status-text { font-size: 14px; font-weight: 600; }
 
-    .cancel-row { margin-top: 10px; }
+    .cancel-row { margin-top: 8px; }
     .btn-ghost-small {
-      width: 100%; min-height: 46px; padding: 12px 16px; border-radius: 14px;
+      width: 100%; min-height: 40px; padding: 9px 16px; border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.2); background: transparent;
-      color: var(--text); font-size: 15px; font-weight: 600; opacity: 0.85;
+      color: var(--text); font-size: 14px; font-weight: 600; opacity: 0.85;
     }
     .btn-ghost-small:active { transform: scale(0.97); opacity: 1; }
 
@@ -154,6 +155,7 @@
     <div class="badge-slot"><div class="offset-badge" id="offsetBadge"></div></div>
 
     <div class="offset-row">
+      <button class="offset-btn b1" id="btnPlus1">+1 min</button>
       <button class="offset-btn b5" id="btnPlus5">+5 min</button>
       <button class="offset-btn b15" id="btnPlus15">+15 min</button>
       <button class="offset-btn b60" id="btnPlus60">+1h</button>

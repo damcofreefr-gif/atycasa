@@ -512,6 +512,7 @@
   renderTarget();
   renderSoundToggle();
   setInterval(renderNow, 1000);
+  $("btnPlus1").onclick = () => addOffset(1);
   $("btnPlus5").onclick = () => addOffset(5);
   $("btnPlus15").onclick = () => addOffset(15);
   $("btnPlus60").onclick = () => addOffset(60);
