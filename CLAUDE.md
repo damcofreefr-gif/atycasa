@@ -64,6 +64,12 @@ par des sessions chronométrées).
   false), pour rester peu intrusive en attendant de vraies notifications
   push. Cloche 🔔/🔕 dans l'en-tête d'atyclock.html, appui long pour
   activer/désactiver ; réglage global, partagé par tous les rappels.
+  Quand elle est activée, l'alarme sonne en boucle (comme un vrai réveil)
+  jusqu'à ce que l'utilisateur la désactive explicitement (bouton "OK" ou
+  action "Arroser" de la bannière) — jamais d'arrêt automatique sur un
+  simple délai ; la bannière elle-même reste alors affichée sans se
+  refermer toute seule, pour toujours garder un moyen visible de
+  l'arrêter.
 - Rappel quotidien : se réarme automatiquement pour la prochaine
   occurrence future, même après plusieurs jours d'absence — jamais de
   rattrapage en rafale. La règle anti-dette du CLAUDE.md (voir Règles

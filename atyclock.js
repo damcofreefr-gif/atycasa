@@ -104,6 +104,21 @@
       // silencieux : lecture audio bloquée par le navigateur
     }
   }
+  // L'alarme sonne en boucle jusqu'à ce que l'utilisateur la désactive
+  // explicitement (bouton "OK" ou action de la bannière) — comme un vrai
+  // réveil, elle ne s'arrête jamais toute seule sur un simple délai.
+  let alarmLoopTimer = null;
+  function startAlarmLoop() {
+    stopAlarmLoop();
+    playAlarm();
+    alarmLoopTimer = setInterval(playAlarm, 3500);
+  }
+  function stopAlarmLoop() {
+    if (alarmLoopTimer) {
+      clearInterval(alarmLoopTimer);
+      alarmLoopTimer = null;
+    }
+  }
   function formatClock(date) {
     return new Intl.DateTimeFormat("fr-FR", {
       hour: "2-digit",
@@ -194,25 +209,35 @@
       '<div class="txt"></div>' +
       '<button type="button" class="action hidden"></button>' +
       '<button type="button" class="close">OK</button>';
-    el.querySelector(".close").onclick = () => el.classList.remove("show");
+    el.querySelector(".close").onclick = () => {
+      stopAlarmLoop();
+      el.classList.remove("show");
+    };
     document.body.appendChild(el);
     return el;
   }
-  function showBanner(text, action) {
+  // sticky: la bannière reste affichée jusqu'à ce que l'utilisateur la
+  // ferme lui-même (au lieu de disparaître après 8s) — utilisé quand une
+  // alarme sonne en boucle, pour toujours laisser un moyen visible de
+  // l'arrêter.
+  function showBanner(text, action, sticky) {
     const el = ensureBannerEl();
     el.querySelector(".txt").textContent = text;
     const actionBtn = el.querySelector(".action");
     if (action) {
       actionBtn.textContent = action.label;
       actionBtn.classList.remove("hidden");
-      actionBtn.onclick = action.onClick;
+      actionBtn.onclick = () => {
+        stopAlarmLoop();
+        action.onClick();
+      };
     } else {
       actionBtn.classList.add("hidden");
       actionBtn.onclick = null;
     }
     el.classList.add("show");
     clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(() => el.classList.remove("show"), 8000);
+    if (!sticky) bannerTimer = setTimeout(() => el.classList.remove("show"), 8000);
   }
 
   // Ouvre la proposition de session pour une zone : directement si
@@ -276,8 +301,12 @@
       ? "🕐 Un rappel est passé"
       : "🕐 C'est l'heure";
     vibrate([80, 40, 80]);
-    if (astate.soundEnabled) playAlarm();
-    showBanner(text, hasZone ? { label: "Arroser", onClick: () => goToProposal(d.zoneId) } : null);
+    if (astate.soundEnabled) startAlarmLoop();
+    showBanner(
+      text,
+      hasZone ? { label: "Arroser", onClick: () => goToProposal(d.zoneId) } : null,
+      astate.soundEnabled
+    );
     if ("Notification" in window && Notification.permission === "granted") {
       try {
         new Notification("Atycasa", { body: text, icon: "icons/icon-192.png" });
