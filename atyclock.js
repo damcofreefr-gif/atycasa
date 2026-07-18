@@ -34,14 +34,55 @@
     if (navigator.vibrate) navigator.vibrate(pattern);
   }
   // Alarme sonore en attendant des vraies notifications push fiables : trois
-  // bips générés à la volée (aucun fichier audio à embarquer). Best-effort
-  // seulement — les navigateurs bloquent l'audio sans interaction récente
-  // de l'utilisateur, d'où le silencieux en cas d'échec.
+  // bips générés à la volée (aucun fichier audio à embarquer). Un
+  // AudioContext créé loin de tout geste utilisateur (le minuteur tourne
+  // seul en arrière-plan) reste "suspendu" et silencieux : on en garde
+  // donc un seul, débloqué dès la première interaction sur la page, et on
+  // le réutilise (avec resume() défensif) pour chaque alarme plutôt que
+  // d'en recréer un neuf à chaque fois.
+  let sharedAudioCtx = null;
+  function getAudioCtx() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    if (!sharedAudioCtx) {
+      try {
+        sharedAudioCtx = new Ctx();
+      } catch (e) {
+        return null;
+      }
+    }
+    if (sharedAudioCtx.state === "suspended") {
+      sharedAudioCtx.resume().catch(() => {});
+    }
+    return sharedAudioCtx;
+  }
+  // Sur iOS notamment, resume() seul ne suffit pas toujours : il faut
+  // vraiment déclencher un son (même inaudible) depuis l'intérieur du
+  // geste pour débloquer durablement l'audio programmatique ultérieur.
+  document.addEventListener(
+    "pointerdown",
+    () => {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      } catch (e) {
+        // silencieux
+      }
+    },
+    { once: true, passive: true }
+  );
+
   function playAlarm() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
     try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      const ctx = new Ctx();
       const start = ctx.currentTime;
       const beep = (at, freq) => {
         const osc = ctx.createOscillator();
@@ -59,7 +100,6 @@
       beep(start, 880);
       beep(start + 0.45, 880);
       beep(start + 0.9, 1046.5);
-      setTimeout(() => ctx.close(), 1600);
     } catch (e) {
       // silencieux : lecture audio bloquée par le navigateur
     }
