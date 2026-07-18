@@ -113,11 +113,13 @@
     .status-row.daily.active .status-dot { background: #5B87C8; }
     .status-text { font-size: 14px; font-weight: 600; }
 
-    .cancel-row { text-align: center; margin-top: 12px; }
+    .cancel-row { margin-top: 12px; }
     .btn-ghost-small {
-      padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
-      background: transparent; color: var(--text); font-size: 13px; opacity: 0.85;
+      width: 100%; min-height: 52px; padding: 14px 16px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2); background: transparent;
+      color: var(--text); font-size: 15px; font-weight: 600; opacity: 0.85;
     }
+    .btn-ghost-small:active { transform: scale(0.97); opacity: 1; }
 
     @media (prefers-reduced-motion: reduce) {
       .offset-badge { transition: none; }
