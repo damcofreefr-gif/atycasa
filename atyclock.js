@@ -304,7 +304,6 @@
     $("programTime").textContent = formatClock(new Date(pendingTarget));
     $("statusRow").classList.toggle("active", active);
     $("statusText").textContent = active ? "Actif" : "En attente";
-    $("dailyNote").classList.toggle("hidden", !pendingDaily);
     $("btnCancel").classList.toggle("hidden", !active);
     $("programHint").textContent = pendingDaily
       ? "Mode quotidien activé 🔁"
