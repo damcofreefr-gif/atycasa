@@ -68,8 +68,9 @@ par des sessions chronométrées).
 - Alarme sonore (bips générés via Web Audio API, sans fichier audio) au
   déclenchement d'un rappel : désactivée par défaut (soundEnabled:
   false), pour rester peu intrusive en attendant de vraies notifications
-  push. Cloche 🔔/🔕 dans l'encart de l'heure d'atyclock.html, appui long pour
-  activer/désactiver ; réglage global, partagé par tous les rappels.
+  push. Cloche 🔔/🔕 intégrée au bouton de validation ("Valider pour
+  HH:MM") d'atyclock.html, appui long pour activer/désactiver ; réglage
+  global, partagé par tous les rappels.
   Quand elle est activée, l'alarme sonne en boucle (comme un vrai réveil)
   jusqu'à ce que l'utilisateur la désactive explicitement (bouton "OK" ou
   action "Arroser" de la bannière) — jamais d'arrêt automatique sur un
