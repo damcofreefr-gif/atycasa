@@ -179,6 +179,11 @@
   // "interface du minuteur" ne s'exécute.
   let pendingTarget = Date.now();
   let pendingDaily = false;
+  // Tant qu'aucun +1/+5/+15 min/+1h n'a été tapé (et qu'aucun rappel
+  // n'est actif), l'heure du bouton de validation suit l'heure actuelle
+  // en direct plutôt que de rester figée sur l'heure d'ouverture de la
+  // page.
+  let hasSelection = false;
 
   // ---------- Bannière (toutes les pages) ----------
   function injectBannerStyle() {
@@ -449,6 +454,8 @@
     if (active) {
       pendingTarget = r.targetTime;
       pendingDaily = r.isDaily;
+    } else if (!hasSelection) {
+      pendingTarget = Date.now();
     }
     $("programLabel").textContent = active ? "Rappel à" : "Valider pour";
     $("programTime").textContent = formatClock(new Date(pendingTarget));
@@ -496,12 +503,14 @@
         pendingTarget = Date.now();
         baseTarget = pendingTarget;
         pendingDaily = false;
+        hasSelection = false;
         renderTarget();
       }
     }, PREVIEW_MS);
   }
 
   function addOffset(minutes) {
+    hasSelection = true;
     pendingTarget += minutes * 60000;
     const r = getCurrentReminder();
     if (r) {
@@ -573,6 +582,7 @@
     pendingTarget = Date.now();
     pendingDaily = false;
     baseTarget = pendingTarget;
+    hasSelection = false;
     vibrate(20);
     renderTarget();
   }
@@ -622,7 +632,10 @@
   renderNow();
   renderTarget();
   renderSoundToggle();
-  setInterval(renderNow, 1000);
+  setInterval(() => {
+    renderNow();
+    renderTarget();
+  }, 1000);
   $("btnPlus1").onclick = () => addOffset(1);
   $("btnPlus5").onclick = () => addOffset(5);
   $("btnPlus15").onclick = () => addOffset(15);
