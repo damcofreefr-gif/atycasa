@@ -83,6 +83,7 @@
 
       { id: "n1", category: "digital", label: "Vider les indésirables de la boîte mail", hint: "", decayDays: 10, priority: 1, duration: 1 },
       { id: "n2", category: "digital", label: "Trier 5 photos", hint: "Juste 5, pas toute la pellicule", decayDays: 14, priority: 1, duration: 1 },
+      { id: "n4", category: "digital", label: "Jeter 5 mails", hint: "Juste 5, pas toute la boîte de réception", decayDays: 5, priority: 1, duration: 1 },
       { id: "n3", category: "digital", label: "Sauvegarder un fichier important", hint: "", decayDays: 21, priority: 1, duration: 1, info: "La règle 3-2-1, simple et efficace :\n• 3 copies du fichier au total\n• 2 supports différents (ex : disque dur + cloud)\n• 1 copie hors de chez toi (cloud, ou disque chez un proche)\n\nPas besoin de tout faire d'un coup — une 2ᵉ copie vaut déjà mieux qu'aucune." },
 
       { id: "s1", category: "space", label: "Ranger un coin précis", hint: "Un seul coin, pas toute la pièce", decayDays: 5, priority: 1, duration: 2 },
