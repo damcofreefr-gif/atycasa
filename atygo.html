@@ -97,9 +97,31 @@
     .sugg-flower { font-size: 60px; text-align: center; margin-top: 8px; transition: transform 0.2s; }
     .sugg-flower.bloom-pop { animation: bloom-pop 0.4s ease; }
     @keyframes bloom-pop { 0%{transform:scale(0.8);} 50%{transform:scale(1.18);} 100%{transform:scale(1);} }
-    .sugg-label { font-size: 22px; font-weight: 800; text-align: center; margin-top: 12px; line-height: 1.25; }
+    .sugg-label { font-size: 22px; font-weight: 800; text-align: center; line-height: 1.25; }
+    .sugg-label-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; }
+    .info-btn {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 999px; padding: 0;
+      border: 1px solid var(--border); background: transparent; color: var(--accent);
+      font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+    }
+    .info-btn:active { transform: scale(0.92); }
     .sugg-hint { font-size: 14px; opacity: 0.75; text-align: center; margin-top: 8px; line-height: 1.4; }
     .sugg-duration { font-size: 12px; opacity: 0.55; text-align: center; margin-top: 10px; }
+    .info-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50;
+    }
+    .info-card {
+      background: var(--surface2); border-radius: 20px; padding: 22px;
+      max-width: 380px; width: 100%; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .info-card-title { font-weight: 800; font-size: 17px; margin-bottom: 10px; }
+    .info-card-body { font-size: 14px; line-height: 1.6; opacity: 0.9; white-space: pre-line; }
+    .info-card-close {
+      margin-top: 18px; width: 100%; min-height: 46px; border-radius: 14px; border: none;
+      background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 15px;
+    }
     .sugg-spacer { flex: 1; min-height: 16px; }
     .sugg-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
     .btn-done {
@@ -214,7 +236,10 @@
       <div id="suggestionBlock">
         <div class="sugg-cat" id="suggCat">Catégorie</div>
         <div class="sugg-flower" id="suggFlower">🌸</div>
-        <div class="sugg-label" id="suggLabel">Action</div>
+        <div class="sugg-label-row">
+          <div class="sugg-label" id="suggLabel">Action</div>
+          <button class="info-btn hidden" id="suggInfoBtn" aria-label="En savoir plus">?</button>
+        </div>
         <div class="sugg-hint" id="suggHint">Précision</div>
         <div class="sugg-duration" id="suggDuration">Durée</div>
       </div>
@@ -251,6 +276,14 @@
       </div>
     </div>
 
+  </div>
+
+  <div class="info-overlay hidden" id="infoOverlay">
+    <div class="info-card">
+      <div class="info-card-title" id="infoTitle">Info</div>
+      <div class="info-card-body" id="infoBody"></div>
+      <button class="info-card-close" id="infoClose">Fermer</button>
+    </div>
   </div>
 
   <script src="atygo.js"></script>

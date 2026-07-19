@@ -50,9 +50,9 @@
       { id: "a1", category: "admin", label: "Traiter une facture en attente", hint: "Ouvre l'appli ou le mail de la facture et prépare le paiement", decayDays: 10, priority: 2, duration: 2 },
       { id: "a2", category: "admin", label: "Répondre à un mail qui traîne", hint: "Ouvre ta boîte mail et réponds au plus vieux message", decayDays: 5, priority: 2, duration: 1 },
       { id: "a3", category: "admin", label: "Prendre un rendez-vous", hint: "Choisis UN rendez-vous à prendre et ouvre le téléphone ou le site", decayDays: 14, priority: 2, duration: 1, dayOnly: true },
-      { id: "a4", category: "admin", label: "Renouveler un document", hint: "Identifie le document à renouveler et ouvre le site concerné", decayDays: 30, priority: 1, duration: 2 },
+      { id: "a4", category: "admin", label: "Renouveler un document", hint: "Identifie le document à renouveler et ouvre le site concerné", decayDays: 30, priority: 1, duration: 2, info: "Durées de validité courantes (à vérifier sur ton document, ça peut varier) :\n• Carte d'identité (adulte) : 10 ans\n• Passeport (adulte) : 10 ans\n• Permis de conduire : pas de limite (sauf poids lourd/transport, 5 ans, ou 15 ans après 60 ans)\n• Carte grise : pas d'expiration, mais adresse à mettre à jour sous 1 mois en cas de déménagement\n\nEn cas de doute, service-public.fr donne l'info à jour." },
 
-      { id: "p1", category: "papers", label: "Trier une rubrique de classeur", hint: "Choisis UNE rubrique (ex : factures, impôts…) et range juste ça", decayDays: 14, priority: 2, duration: 2, gate: "papers" },
+      { id: "p1", category: "papers", label: "Trier une rubrique de classeur", hint: "Choisis UNE rubrique (ex : factures, impôts…) et range juste ça", decayDays: 14, priority: 2, duration: 2, gate: "papers", info: "Durées de conservation courantes (à titre indicatif) :\n• Factures eau / élec / gaz : 5 ans\n• Factures téléphone / internet : 1 an\n• Quittances de loyer : 3 ans après le départ\n• Relevés bancaires : 5 ans\n• Bulletins de salaire : jusqu'à la retraite\n• Avis d'imposition : 3 ans (mieux : à vie)\n• Factures de travaux / artisan : 10 ans\n• Contrats d'assurance : durée du contrat + 2 ans après résiliation\n• Ordonnances / factures médicales : 2 ans\n\nEn cas de doute, garde le document — mieux vaut trier trop peu que jeter un papier utile. Détail sur service-public.fr." },
 
       { id: "d1", category: "domestic", label: "Sortir une poubelle", hint: "", decayDays: 3, priority: 2, duration: 1 },
       { id: "d2", category: "domestic", label: "Lancer une lessive", hint: "", decayDays: 4, priority: 2, duration: 1 },
@@ -82,10 +82,10 @@
 
       { id: "n1", category: "digital", label: "Vider les indésirables de la boîte mail", hint: "", decayDays: 10, priority: 1, duration: 1 },
       { id: "n2", category: "digital", label: "Trier 5 photos", hint: "Juste 5, pas toute la pellicule", decayDays: 14, priority: 1, duration: 1 },
-      { id: "n3", category: "digital", label: "Sauvegarder un fichier important", hint: "", decayDays: 21, priority: 1, duration: 1 },
+      { id: "n3", category: "digital", label: "Sauvegarder un fichier important", hint: "", decayDays: 21, priority: 1, duration: 1, info: "La règle 3-2-1, simple et efficace :\n• 3 copies du fichier au total\n• 2 supports différents (ex : disque dur + cloud)\n• 1 copie hors de chez toi (cloud, ou disque chez un proche)\n\nPas besoin de tout faire d'un coup — une 2ᵉ copie vaut déjà mieux qu'aucune." },
 
       { id: "s1", category: "space", label: "Ranger un coin précis", hint: "Un seul coin, pas toute la pièce", decayDays: 5, priority: 1, duration: 2 },
-      { id: "s2", category: "space", label: "Jeter le courrier périmé", hint: "", decayDays: 7, priority: 1, duration: 1 },
+      { id: "s2", category: "space", label: "Jeter le courrier périmé", hint: "", decayDays: 7, priority: 1, duration: 1, info: "Avant de jeter, 3 repères rapides :\n• Pub / relevés déjà obsolètes → poubelle direct\n• Facture eau/élec/gaz de plus de 5 ans → poubelle\n• Un doute (impôts, contrat, acte) → garde-le plutôt et trie-le dans les classeurs\n\nListe complète dans l'action \"Trier une rubrique de classeur\"." },
 
       { id: "pe1", category: "pets", label: "Nourrir / donner à boire", hint: "", decayDays: 0.5, priority: 3, duration: 1, gate: "pet" },
       { id: "pe2", category: "pets", label: "Nettoyer litière ou gamelle", hint: "", decayDays: 2, priority: 2, duration: 1, gate: "pet" },
@@ -213,10 +213,22 @@
     $("suggLabel").textContent = a.label;
     $("suggHint").textContent = a.hint || "";
     $("suggHint").classList.toggle("hidden", !a.hint);
+    $("suggInfoBtn").classList.toggle("hidden", !a.info);
     const dur = DURATIONS[a.duration || 1];
     $("suggDuration").textContent = `${dur.icon} ${dur.label}`;
     astate._current = a.id;
     lastDuration = a.duration || 1;
+  }
+
+  function openInfo() {
+    const a = astate.actions.find((x) => x.id === astate._current);
+    if (!a || !a.info) return;
+    $("infoTitle").textContent = a.label;
+    $("infoBody").textContent = a.info;
+    $("infoOverlay").classList.remove("hidden");
+  }
+  function closeInfo() {
+    $("infoOverlay").classList.add("hidden");
   }
 
   function markDone() {
@@ -403,6 +415,9 @@
   $("btnDone").onclick = markDone;
   $("btnLaterAction").onclick = declineCurrent;
   $("btnNeverAgain").onclick = neverAgain;
+  $("suggInfoBtn").onclick = openInfo;
+  $("infoClose").onclick = closeInfo;
+  $("infoOverlay").onclick = (e) => { if (e.target === $("infoOverlay")) closeInfo(); };
   $("btnGear").onclick = () => {
     const managing = !$("screenManage").classList.contains("hidden");
     showScreen(managing ? "main" : "manage");

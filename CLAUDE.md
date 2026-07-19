@@ -159,9 +159,25 @@ par des sessions chronométrées).
   ajouter une action libre (nom + précision + catégorie) — c'est
   ainsi qu'on nomme des rubriques de classeur spécifiques (ex :
   "Trier la rubrique Impôts").
+- Bouton "?" (`suggInfoBtn`) à côté du libellé de la suggestion,
+  affiché seulement quand l'action a un champ `info` (texte libre,
+  pas de champ dédié dans l'écran d'ajout — réservé aux actions par
+  défaut qui bénéficient d'un vrai repère). Ouvre une modale
+  (`infoOverlay`) avec le texte complet. Champ actuellement rempli
+  pour 4 actions : "Trier une rubrique de classeur" (durées de
+  conservation courantes des papiers administratifs — factures,
+  quittances, relevés, impôts…), "Jeter le courrier périmé" (version
+  courte, pointe vers la précédente), "Renouveler un document"
+  (durées de validité CNI/passeport/permis/carte grise), "Sauvegarder
+  un fichier important" (règle 3-2-1). Contenu volontairement non
+  exhaustif : uniquement des repères factuels et non ambigus
+  (durées légales usuelles, règles génériques) — pas de terrain
+  glissant comme la santé ou les soins animaux/plantes où une
+  réponse générique serait trompeuse. Textes présentés "à titre
+  indicatif" avec renvoi à service-public.fr en cas de doute.
 - Données : localStorage clé "atygo-v1", {onboarded, prefs: {car,
   pet, papers}, actions: [{id, category, label, hint, decayDays,
-  priority, enabled, lastDoneAt, custom}]}.
+  priority, enabled, lastDoneAt, custom, info?}]}.
 
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
