@@ -581,7 +581,42 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// ---------- Scène décorative (fleur qui fane puis se fait arroser) ----------
+// Purement décoratif, sans lien avec les vraies zones : comble le vide en
+// bas de l'onglet Maison quand il y a peu de contenu.
+function initIdleFlowerLoop() {
+  const flowerEl = $("idleFlower");
+  const canWrap = $("idleCanWrap");
+  if (!flowerEl || !canWrap) return;
+  const stages = ["🌸", "🌷", "🥀", "🍂"];
+  let i = 0;
+  function pop() {
+    flowerEl.classList.remove("bloom-pop");
+    void flowerEl.offsetWidth; // relance l'animation
+    flowerEl.classList.add("bloom-pop");
+  }
+  function tick() {
+    flowerEl.textContent = stages[i];
+    pop();
+    if (i < stages.length - 1) {
+      i++;
+      setTimeout(tick, 1500);
+    } else {
+      setTimeout(() => {
+        canWrap.classList.add("watering");
+        setTimeout(() => {
+          canWrap.classList.remove("watering");
+          i = 0;
+          setTimeout(tick, 300);
+        }, 2400);
+      }, 1200);
+    }
+  }
+  tick();
+}
+
 // ---------- Démarrage ----------
 load();
 bindEvents();
 renderAll();
+initIdleFlowerLoop();

@@ -27,6 +27,11 @@ par des sessions chronométrées).
 - Combo : si une autre zone du même étage a une fraîcheur < 50 %, on la
   suggère en complément (rentabiliser le déplacement).
 - Fleur au centre de chaque zone : 🌸 ≥70 % → 🌷 ≥45 % → 🥀 ≥20 % → 🍂 <20 %.
+- Scène décorative en bas de l'onglet Maison (initIdleFlowerLoop dans
+  app.js) : une fleur fane puis se fait arroser (réutilise le SVG +
+  animations tilt/fall de l'arrosoir du timer), en boucle continue.
+  Purement visuel, sans lien avec les vraies zones — juste pour combler
+  le vide quand le contenu est court.
 
 ## Atyclock (tap timer)
 - Rappel programmable accessible via le bouton 🕐 dans l'en-tête d'Atycasa.

@@ -215,6 +215,34 @@
       .drop.d2, .drop.d3 { display: none; }
     }
 
+    /* Petite scène décorative (fleur qui fane puis se fait arroser, en
+       boucle) pour combler le vide en bas de l'onglet Maison quand le
+       contenu est court. */
+    .idle-decor {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      margin-top: 48px; opacity: 0.85;
+    }
+    .idle-can-wrap { position: relative; height: 52px; }
+    .idle-can-wrap .idle-can { transform-origin: 60% 70%; }
+    .idle-can-wrap.watering .idle-can { animation: tilt 2.4s ease-in-out; }
+    .idle-drops { position: absolute; left: -14px; top: 26px; width: 30px; }
+    .idle-can-wrap.watering .idle-drops .drop { animation: fall 2.4s ease-in; }
+    .idle-flower {
+      font-size: 52px; line-height: 1; transform: scale(1);
+      transition: transform 0.2s;
+    }
+    .idle-flower.bloom-pop { animation: bloom-pop 0.4s ease; }
+    @keyframes bloom-pop {
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .idle-can-wrap.watering .idle-can,
+      .idle-can-wrap.watering .idle-drops .drop,
+      .idle-flower.bloom-pop { animation: none; }
+    }
+
     /* Modales */
     .overlay {
       position: fixed; inset: 0; z-index: 50;
@@ -268,6 +296,22 @@
   <!-- Onglet Maison -->
   <div id="panel-home">
     <div id="homeContent"></div>
+    <div class="idle-decor" aria-hidden="true">
+      <div class="idle-can-wrap" id="idleCanWrap">
+        <svg class="idle-can" viewBox="0 0 120 90" width="64" height="48">
+          <rect x="30" y="35" width="50" height="40" rx="8" fill="#5BE3A9"/>
+          <path d="M 42 35 Q 55 12 68 35" fill="none" stroke="#5BE3A9" stroke-width="7" stroke-linecap="round"/>
+          <path d="M 32 45 L 8 28 L 14 22 L 36 40 Z" fill="#5BE3A9"/>
+          <circle cx="10" cy="24" r="7" fill="#4BC790"/>
+        </svg>
+        <div class="idle-drops">
+          <span class="drop d1">💧</span>
+          <span class="drop d2">💧</span>
+          <span class="drop d3">💧</span>
+        </div>
+      </div>
+      <div class="idle-flower" id="idleFlower">🌸</div>
+    </div>
   </div>
 
   <!-- Onglet Plan -->
