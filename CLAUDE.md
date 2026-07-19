@@ -94,7 +94,7 @@ par des sessions chronométrées).
   présenté comme un échec ou un retard.
 
 ## Atygo (déblocage / démarrage d'action)
-- Bouton ⚡ dans l'en-tête d'Atycasa (à gauche du bouton 🕐). Rôle :
+- Bouton 🪄 dans l'en-tête d'Atycasa (à gauche du bouton 🕐). Rôle :
   débloquer l'indécision face à la multiplication des tâches de
   logistique du quotidien, à n'importe quel moment de la journée —
   jamais spécifiquement "routine du matin". Propose UNE seule
