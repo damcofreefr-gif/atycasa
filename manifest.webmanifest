@@ -4,8 +4,8 @@
   "description": "Routine de rangement et nettoyage en micro-sessions, pensée pour les cerveaux TDAH.",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0E1B1E",
-  "theme_color": "#0E1B1E",
+  "background_color": "#16130F",
+  "theme_color": "#16130F",
   "lang": "fr",
   "icons": [
     {

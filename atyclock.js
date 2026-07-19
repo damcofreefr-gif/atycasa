@@ -192,7 +192,7 @@
     style.id = "atyclockBannerStyle";
     style.textContent =
       ".atyclock-banner{position:fixed;left:14px;right:14px;top:max(14px,env(safe-area-inset-top));" +
-      "z-index:200;background:var(--surface2,#16292E);border:1px solid var(--accent,#5BE3A9);" +
+      "z-index:200;background:var(--surface2,#241E17);border:1px solid var(--accent,#5BE3A9);" +
       "border-radius:14px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" +
       "display:flex;align-items:center;gap:10px;transform:translateY(-140%);" +
       "transition:transform 0.3s ease;font-family:'Avenir Next','Segoe UI',system-ui,sans-serif;}" +

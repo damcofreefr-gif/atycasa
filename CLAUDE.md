@@ -96,7 +96,11 @@ par des sessions chronométrées).
   Fraîcheur : freshBase - (now - freshAt) / (decayDays_eff * 86400000) * 100.
 - Cellules du plan : cells["floorId:x:y"] = zoneId, grille 12×9 par étage.
 - Cible : mobile d'abord (PWA installée), tactile, mode sombre.
-  Fond #0E1B1E, accent #5BE3A9.
+  Fond anthracite chaud #16130F → #221C15 (dégradé), accent #5BE3A9.
+  Choix voulu : le sombre reste plus confortable pour ce profil
+  (moins de sur-stimulation, usage tardif fréquent) mais un noir-bleu
+  froid contredit le ton "chaleureux, jamais culpabilisant" — d'où un
+  anthracite à undertone chaud plutôt qu'un vrai mode clair.
 
 ## Workflow
 - Test local : npx http-server -p 8080 (le service worker exige un
