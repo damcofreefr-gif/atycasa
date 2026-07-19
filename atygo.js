@@ -25,6 +25,7 @@
     digital: { label: "Numérique", icon: "💻" },
     space: { label: "Espace de vie", icon: "🧺" },
     pets: { label: "Animaux", icon: "🐾" },
+    plants: { label: "Plantes", icon: "🪴" },
   };
 
   const DURATIONS = {
@@ -89,6 +90,8 @@
       { id: "pe1", category: "pets", label: "Nourrir / donner à boire", hint: "", decayDays: 0.5, priority: 3, duration: 1, gate: "pet" },
       { id: "pe2", category: "pets", label: "Nettoyer litière ou gamelle", hint: "", decayDays: 2, priority: 2, duration: 1, gate: "pet" },
       { id: "pe3", category: "pets", label: "Sortir promener", hint: "", decayDays: 1, priority: 2, duration: 2, gate: "pet" },
+
+      { id: "pl1", category: "plants", label: "Arroser les plantes", hint: "Fais juste le tour, celles qui en ont besoin", decayDays: 4, priority: 2, duration: 1, gate: "plants" },
     ];
   }
 
@@ -102,7 +105,7 @@
     } catch (e) {
       console.error("Atygo : chargement impossible", e);
     }
-    return { onboarded: false, prefs: { car: true, pet: true, papers: true }, actions: [] };
+    return { onboarded: false, prefs: { car: true, pet: true, plants: true, papers: true }, actions: [] };
   }
   let astate = load();
   function save() {
@@ -219,6 +222,7 @@
   function renderOnboardingSwitches() {
     $("qCar").classList.toggle("on", !!astate.prefs.car);
     $("qPet").classList.toggle("on", !!astate.prefs.pet);
+    $("qPlants").classList.toggle("on", !!astate.prefs.plants);
     $("qPapers").classList.toggle("on", !!astate.prefs.papers);
   }
   function bindSwitch(el) {
@@ -353,10 +357,10 @@
   populateCategorySelect();
   populateDurationSelect();
   $("newDayOnly").onclick = () => $("newDayOnly").classList.toggle("on");
-  [$("qCar"), $("qPet"), $("qPapers")].forEach(bindSwitch);
+  [$("qCar"), $("qPet"), $("qPlants"), $("qPapers")].forEach(bindSwitch);
   $("btnOnbStart").onclick = finishOnboarding;
   $("btnOnbSkip").onclick = () => {
-    astate.prefs = { car: true, pet: true, papers: true };
+    astate.prefs = { car: true, pet: true, plants: true, papers: true };
     finishOnboarding();
   };
   $("btnDone").onclick = markDone;

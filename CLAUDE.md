@@ -104,15 +104,19 @@ par des sessions chronométrées).
   urgence) pour rester cohérent avec le reste de l'app.
 - Fichiers atygo.html + atygo.js (mêmes contraintes vanilla, non
   chargés sur les autres pages — pas de logique partagée nécessaire).
-- Questionnaire de démarrage (1 seul écran, 3 interrupteurs : voiture,
-  animal, papiers/classeurs) affiché au tout premier lancement,
-  modifiable ensuite en réactivant les catégories correspondantes
-  dans l'écran de gestion (⚙️). "Passer" active tout par défaut.
-- 12 catégories, ~30 actions par défaut (voir defaultActions() dans
+- Questionnaire de démarrage (1 seul écran, 4 interrupteurs : voiture,
+  animal, plantes, papiers/classeurs) affiché au tout premier
+  lancement, modifiable ensuite en réactivant les catégories
+  correspondantes dans l'écran de gestion (⚙️). "Passer" active tout
+  par défaut.
+- 13 catégories, ~30 actions par défaut (voir defaultActions() dans
   atygo.js) : Administratif, Papiers/classeurs (dont "trier une
   rubrique de classeur", demandé explicitement), Domestique léger,
   Alimentation, Santé, Finances, Communication, Organisation,
-  Véhicule, Numérique, Espace de vie, Animaux.
+  Véhicule, Numérique, Espace de vie, Animaux, Plantes (catégorie
+  séparée des Animaux — arroser une plante et nourrir un animal sont
+  deux actions distinctes, chacune gérée par sa propre question du
+  questionnaire).
 - Priorité (basse/normale/haute) × décroissance par action
   (decayDays) → urgence = priorité × (temps écoulé depuis "fait" /
   décroissance). La plus urgente et non déclinée dans la session en
