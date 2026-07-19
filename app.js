@@ -191,6 +191,16 @@ function nextZone() {
   if (state.zones.length === 0) return null;
   return [...state.zones].sort((a, b) => freshnessOf(a) - freshnessOf(b))[0];
 }
+// Autre zone qui a soif (même seuil que le combo), en excluant toutes
+// celles déjà déclinées dans cette même chaîne de propositions — pour
+// toujours proposer une alternative plutôt que de refermer sur un
+// cul-de-sac, sans jamais reproposer une zone déjà refusée.
+function nextNeedyZoneExcluding(excludeIds) {
+  const excludeSet = new Set(excludeIds);
+  const candidates = state.zones.filter((z) => !excludeSet.has(z.id) && freshnessOf(z) < 50);
+  if (candidates.length === 0) return null;
+  return [...candidates].sort((a, b) => freshnessOf(a) - freshnessOf(b))[0];
+}
 function comboZone(mainId) {
   const mainFloors = new Set(
     Object.entries(state.cells)
@@ -208,9 +218,9 @@ function comboZone(mainId) {
 }
 
 // ---------- Sessions ----------
-function openProposal(zone) {
+function openProposal(zone, declinedIds) {
   const fresh = freshnessOf(zone);
-  ui.proposal = { zoneId: zone.id, minutes: suggestedMinutes(zone, fresh) };
+  ui.proposal = { zoneId: zone.id, minutes: suggestedMinutes(zone, fresh), declinedIds: declinedIds || [] };
   $("propName").textContent = `${flowerOf(fresh)} ${zone.name}`;
   $("propName").style.color = zone.color;
   $("propInfo").textContent =
@@ -553,8 +563,17 @@ function bindEvents() {
   // Modales
   $("btnStart").onclick = startSession;
   $("btnLater").onclick = () => {
+    const declinedId = ui.proposal ? ui.proposal.zoneId : null;
+    const allDeclined = declinedId
+      ? [...(ui.proposal.declinedIds || []), declinedId]
+      : [];
     ui.proposal = null;
-    $("proposalOverlay").classList.add("hidden");
+    const alt = declinedId ? nextNeedyZoneExcluding(allDeclined) : null;
+    if (alt) {
+      openProposal(alt, allDeclined);
+    } else {
+      $("proposalOverlay").classList.add("hidden");
+    }
   };
   $("proposalOverlay").onclick = (e) => {
     if (e.target === $("proposalOverlay")) $("btnLater").onclick();

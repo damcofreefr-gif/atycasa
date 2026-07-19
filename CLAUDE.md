@@ -26,6 +26,11 @@ par des sessions chronométrées).
   par niveau.
 - Combo : si une autre zone du même étage a une fraîcheur < 50 %, on la
   suggère en complément (rentabiliser le déplacement).
+- "Plus tard" sur la modale de proposition ne referme pas juste la
+  fenêtre : si une autre zone a soif (< 50 %, hors celles déjà
+  déclinées dans cette même chaîne), elle est aussitôt proposée à la
+  place — jamais de cul-de-sac tant qu'il reste une zone qui a besoin
+  d'attention.
 - Fleur au centre de chaque zone : 🌸 ≥70 % → 🌷 ≥45 % → 🥀 ≥20 % → 🍂 <20 %.
 - Scène décorative en bas de l'onglet Maison (initIdleFlowerLoop dans
   app.js) : une fleur fane puis se fait arroser (réutilise le SVG +
