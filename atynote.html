@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#16130F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Bloc-note · Atycasa</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg1: #16130F;
+      --bg2: #221C15;
+      --surface: rgba(255,255,255,0.05);
+      --surface2: #241E17;
+      --text: #EAF4F0;
+      --accent: #5BE3A9;
+      --accent-dark: #16130F;
+      --border: rgba(255,255,255,0.12);
+    }
+    * {
+      box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
+      -ms-user-select: none; user-select: none;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
+    body {
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+      padding: max(14px, env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    textarea, input { font-family: inherit; user-select: text; -webkit-user-select: text; }
+    .hidden { display: none !important; }
+
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .back-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 8px 12px; font-size: 16px;
+    }
+    .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+
+    .card {
+      background: var(--surface2); border-radius: 20px; padding: 20px 22px;
+      width: 100%; max-width: 420px; margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+    }
+    #screenSetup, #screenName, #screenNote {
+      display: flex; flex-direction: column; flex: 1; min-height: 0;
+    }
+
+    /* ---------- Écran d'installation ---------- */
+    .setup-text { font-size: 14px; line-height: 1.6; opacity: 0.85; white-space: pre-line; }
+    .setup-text b { color: var(--accent); }
+
+    /* ---------- Écran prénom ---------- */
+    .name-intro { font-size: 14px; opacity: 0.8; line-height: 1.5; margin-bottom: 18px; }
+    .name-input {
+      width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--border);
+      background: var(--bg1); color: var(--text); font-size: 16px; margin-bottom: 14px;
+    }
+    .btn-primary {
+      width: 100%; min-height: 52px; padding: 14px; border-radius: 16px; border: none;
+      background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 16px;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+
+    /* ---------- Écran principal ---------- */
+    .note-signed { font-size: 12px; opacity: 0.55; text-align: center; margin-bottom: 10px; }
+    .note-signed button {
+      background: transparent; border: none; color: var(--accent);
+      font-size: 12px; text-decoration: underline; padding: 0;
+    }
+    .note-list { overflow-y: auto; flex: 1; min-height: 0; margin: 0 -6px; padding: 0 6px; }
+    .note-empty { text-align: center; padding: 30px 10px; opacity: 0.7; line-height: 1.6; font-size: 14px; }
+    .note-empty .big { font-size: 40px; margin-bottom: 10px; }
+    .note-item {
+      background: var(--surface); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+      border-left: 3px solid var(--accent);
+    }
+    .note-item.seen { border-left-color: var(--border); opacity: 0.65; }
+    .note-item-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+    .note-item-author { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .note-item.seen .note-item-author { color: var(--text); opacity: 0.7; }
+    .note-item-time { font-size: 11px; opacity: 0.5; flex-shrink: 0; }
+    .note-item-text { font-size: 15px; line-height: 1.4; white-space: pre-line; }
+    .note-item-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .note-item-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 6px 10px; font-size: 12px; font-weight: 600; opacity: 0.85;
+    }
+    .note-item-btn.del { opacity: 0.5; }
+
+    .note-add { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+    .note-textarea {
+      width: 100%; min-height: 64px; max-height: 140px; padding: 12px 14px; border-radius: 14px;
+      border: 1px solid var(--border); background: var(--bg1); color: var(--text);
+      font-size: 15px; resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡</button>
+    <div class="h-title">📝 Bloc-note</div>
+  </div>
+
+  <div class="card">
+
+    <!-- Écran d'installation (tant que firebase-config.js n'est pas rempli) -->
+    <div id="screenSetup" class="hidden">
+      <div class="setup-text">Le bloc-note partagé a besoin d'être connecté une seule fois avant de fonctionner.
+
+Ouvre <b>firebase-config.js</b> à la racine du projet : les instructions complètes y sont, étape par étape (créer un projet Firebase gratuit, copier quelques clés, définir les règles d'accès).
+
+Une fois le fichier rempli et déployé, cet écran disparaît tout seul.</div>
+    </div>
+
+    <!-- Écran prénom (une fois par appareil) -->
+    <div id="screenName" class="hidden">
+      <div class="name-intro">Comment veux-tu signer tes suggestions ? Ça permet de savoir qui a écrit quoi.</div>
+      <input type="text" id="nameInput" class="name-input" placeholder="Ton prénom" maxlength="30">
+      <button class="btn-primary" id="btnSaveName">C'est parti</button>
+    </div>
+
+    <!-- Écran principal -->
+    <div id="screenNote" class="hidden">
+      <div class="note-signed">Signé <span id="signedName"></span> · <button id="btnChangeName">changer</button></div>
+      <div class="note-list" id="noteList"></div>
+      <div class="note-empty hidden" id="noteEmpty">
+        <div class="big">📝</div>
+        <div>Rien pour l'instant.<br>Écris une suggestion ci-dessous.</div>
+      </div>
+      <div class="note-add">
+        <textarea class="note-textarea" id="noteInput" placeholder="Écris une suggestion..." maxlength="500"></textarea>
+        <button class="btn-primary" id="btnSend">Envoyer</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="atynote.js"></script>
+</body>
+</html>

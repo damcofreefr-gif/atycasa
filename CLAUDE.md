@@ -204,6 +204,43 @@ par des sessions chronométrées).
   priority, enabled, lastDoneAt, custom, info?, link?}], daily:
   {dayKey, done: [{label, category, at}], reportShownAt}, notifAsked}.
 
+## Atynote (bloc-note de suggestions partagé)
+- Bouton 📝 dans l'en-tête d'Atycasa (à droite du bouton 🕐). Rôle :
+  bloc-note partagé en direct entre deux personnes (ex : conjoint·e)
+  pour déposer des suggestions de modifs sur l'app, consultables
+  sans manip côté lecteur. Seule fonctionnalité de tout le projet à
+  sortir du localStorage pur — voir justification ci-dessous.
+- Fichiers atynote.html + atynote.js (mêmes contraintes vanilla que
+  le reste), + firebase-config.js (config à remplir une fois, voir
+  ce fichier pour la marche à suivre pas à pas). atynote.js tourne
+  sur index.html (juste pour la pastille du bouton 📝) et sur
+  atynote.html (interface complète) — jamais sur atyclock.html/
+  atygo.html, qui restent indépendants.
+- Stockage : Firebase Realtime Database (le seul point de l'app qui
+  ne soit pas 100% local — une suggestion écrite sur un téléphone
+  doit apparaître aussitôt sur l'autre, ce qu'un simple localStorage
+  ne permet pas). Tant que firebase-config.js garde ses valeurs
+  REMPLACE_MOI, Atynote affiche un écran d'installation au lieu de
+  planter — le reste de l'app (Atycasa/Atyclock/Atygo) continue de
+  fonctionner normalement sans configuration Firebase.
+- Identité : pas de compte, juste un prénom saisi une fois par
+  appareil (localStorage clé "atynote-name-v1") pour signer les
+  suggestions et savoir qui a écrit quoi.
+- Chaque suggestion : {text, author, createdAt, seen}. "✓ Vu" bascule
+  `seen` (visible par les deux, pas de lecture "par appareil") ;
+  "✕ Supprimer" retire l'entrée. Pas de note, pas de statut complexe
+  — juste texte + auteur + vu ou pas.
+  Bouton 📝 pulse (même mécanique que le bouton 🕐) dès qu'une
+  suggestion non vue existe ET n'est pas de son propre prénom — on
+  n'est jamais notifié de son propre message.
+- Sécurité assumée : les clés Firebase (apiKey compris) ne sont pas
+  secrètes en soi, la vraie protection vient des règles de la base
+  (voir firebase-config.js) combinées à un segment de chemin
+  aléatoire (`notePath`) — pas d'auth, pas d'écran de connexion,
+  pour rester dans l'esprit "zéro friction" du projet. C'est une
+  protection raisonnable pour un bloc-note familial, pas un vrai
+  chiffrement — à garder en tête si le dépôt GitHub est public.
+
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
   Déploiement = push des fichiers statiques tels quels sur GitHub Pages.
@@ -211,7 +248,10 @@ par des sessions chronométrées).
   sw.js (service worker network-first : chaque push met à jour l'app
   installée), manifest.webmanifest, icons/.
 - Données : localStorage clé "maison-v1", objet {floors, zones, cells}.
-  Export/import JSON de secours dans l'onglet Zones. Aucun serveur.
+  Export/import JSON de secours dans l'onglet Zones. Aucun serveur —
+  seule exception : Atynote (bloc-note partagé, voir section dédiée),
+  qui utilise Firebase Realtime Database car un partage "en direct"
+  entre deux téléphones est impossible avec du localStorage seul.
 - Modèle zone : {id, name, color, type: 'daily'|'expedition', decayDays,
   level, totalMin, progressMin, freshBase, freshAt}.
   Fraîcheur : freshBase - (now - freshAt) / (decayDays_eff * 86400000) * 100.
