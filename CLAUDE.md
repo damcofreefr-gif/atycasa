@@ -160,24 +160,49 @@ par des sessions chronométrées).
   ainsi qu'on nomme des rubriques de classeur spécifiques (ex :
   "Trier la rubrique Impôts").
 - Bouton "?" (`suggInfoBtn`) à côté du libellé de la suggestion,
-  affiché seulement quand l'action a un champ `info` (texte libre,
-  pas de champ dédié dans l'écran d'ajout — réservé aux actions par
+  affiché seulement quand l'action a un champ `info` et/ou `link`
+  (pas de champ dédié dans l'écran d'ajout — réservé aux actions par
   défaut qui bénéficient d'un vrai repère). Ouvre une modale
-  (`infoOverlay`) avec le texte complet. Champ actuellement rempli
-  pour 4 actions : "Trier une rubrique de classeur" (durées de
-  conservation courantes des papiers administratifs — factures,
-  quittances, relevés, impôts…), "Jeter le courrier périmé" (version
-  courte, pointe vers la précédente), "Renouveler un document"
-  (durées de validité CNI/passeport/permis/carte grise), "Sauvegarder
-  un fichier important" (règle 3-2-1). Contenu volontairement non
-  exhaustif : uniquement des repères factuels et non ambigus
-  (durées légales usuelles, règles génériques) — pas de terrain
-  glissant comme la santé ou les soins animaux/plantes où une
-  réponse générique serait trompeuse. Textes présentés "à titre
-  indicatif" avec renvoi à service-public.fr en cas de doute.
+  (`infoOverlay`) avec le texte et/ou un lien externe cliquable
+  (`a.link = {url, label}`, ouvert dans un nouvel onglet). Champ
+  `info` rempli pour 4 actions : "Trier une rubrique de classeur"
+  (durées de conservation courantes des papiers administratifs —
+  factures, quittances, relevés, impôts…), "Jeter le courrier
+  périmé" (version courte, pointe vers la précédente), "Renouveler
+  un document" (durées de validité CNI/passeport/permis/carte
+  grise), "Sauvegarder un fichier important" (règle 3-2-1). Champ
+  `link` rempli pour "Faire le plein" (renvoie vers
+  prix-carburants.gouv.fr, le site officiel de comparaison des prix
+  des stations). Contenu volontairement non exhaustif : uniquement
+  des repères factuels et non ambigus, ou des liens vers des sources
+  officielles stables — pas de terrain glissant comme la santé ou
+  les soins animaux/plantes où une réponse générique serait
+  trompeuse. Textes présentés "à titre indicatif" avec renvoi à
+  service-public.fr en cas de doute.
+- Bilan du jour : récapitulatif chaleureux de ce qui a été fait
+  aujourd'hui (jamais de ce qui ne l'a pas été, cf. règle anti-dette
+  du projet). Chaque "Fait !" ajoute une entrée à `astate.daily.done`
+  (label, catégorie, horodatage) ; `astate.daily` se réinitialise
+  automatiquement au changement de date (`dayKey`, format
+  AAAA-MM-JJ). Accès : badge discret sur l'écran principal dès qu'au
+  moins une action est faite dans la journée ("🪄 X fait aujourd'hui"),
+  et entrée permanente "🪄 Voir le bilan du jour" dans l'écran de
+  gestion (état neutre si rien n'est fait). Les deux ouvrent la même
+  modale (`reportOverlay`), liste chronologique inversée. Notification
+  navigateur (permission demandée une seule fois, lors du tout
+  premier "Fait !" — jamais redemandée si refusée, même logique
+  qu'Atyclock) déclenchée à partir de 20h (`EOD_HOUR`) s'il y a eu au
+  moins une action ce jour-là et que le bilan n'a pas déjà été montré
+  (`reportShownAt`), vérifié par un intervalle (`checkDailyReport`,
+  60s) + au retour au premier plan + juste après chaque "Fait !".
+  Limite assumée (pas de serveur = pas de réveil en arrière-plan) :
+  la notification ne part que si l'onglet est encore ouvert à ce
+  moment-là ; sinon le badge/l'entrée de menu prennent le relais dès
+  la prochaine ouverture, sans jamais présenter ça comme un retard.
 - Données : localStorage clé "atygo-v1", {onboarded, prefs: {car,
   pet, papers}, actions: [{id, category, label, hint, decayDays,
-  priority, enabled, lastDoneAt, custom, info?}]}.
+  priority, enabled, lastDoneAt, custom, info?, link?}], daily:
+  {dayKey, done: [{label, category, at}], reportShownAt}, notifAsked}.
 
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.

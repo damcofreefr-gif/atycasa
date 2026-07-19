@@ -77,7 +77,7 @@
       { id: "o2", category: "organize", label: "Préparer un sac (travail, sport, sortie)", hint: "", decayDays: 2, priority: 1, duration: 1 },
       { id: "o3", category: "organize", label: "Noter une idée qui tourne en tête", hint: "", decayDays: 3, priority: 1, duration: 1 },
 
-      { id: "v1", category: "vehicle", label: "Faire le plein", hint: "", decayDays: 7, priority: 2, duration: 2, dayOnly: true, gate: "car" },
+      { id: "v1", category: "vehicle", label: "Faire le plein", hint: "", decayDays: 7, priority: 2, duration: 2, dayOnly: true, gate: "car", link: { url: "https://www.prix-carburants.gouv.fr/", label: "Comparer les prix des stations ↗" } },
       { id: "v2", category: "vehicle", label: "Vérifier un trajet ou un billet", hint: "", decayDays: 14, priority: 1, duration: 1, gate: "car" },
 
       { id: "n1", category: "digital", label: "Vider les indésirables de la boîte mail", hint: "", decayDays: 10, priority: 1, duration: 1 },
@@ -95,17 +95,28 @@
     ];
   }
 
+  function todayKey(d) {
+    const dt = d || new Date();
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  }
+  function emptyDaily() {
+    return { dayKey: todayKey(), done: [], reportShownAt: null };
+  }
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const d = JSON.parse(raw);
-        if (Array.isArray(d.actions)) return d;
+        if (Array.isArray(d.actions)) {
+          if (!d.daily) d.daily = emptyDaily();
+          if (typeof d.notifAsked !== "boolean") d.notifAsked = false;
+          return d;
+        }
       }
     } catch (e) {
       console.error("Atygo : chargement impossible", e);
     }
-    return { onboarded: false, prefs: { car: true, pet: true, plants: true, papers: true }, actions: [] };
+    return { onboarded: false, prefs: { car: true, pet: true, plants: true, papers: true }, actions: [], daily: emptyDaily(), notifAsked: false };
   }
   let astate = load();
   function save() {
@@ -213,7 +224,7 @@
     $("suggLabel").textContent = a.label;
     $("suggHint").textContent = a.hint || "";
     $("suggHint").classList.toggle("hidden", !a.hint);
-    $("suggInfoBtn").classList.toggle("hidden", !a.info);
+    $("suggInfoBtn").classList.toggle("hidden", !a.info && !a.link);
     const dur = DURATIONS[a.duration || 1];
     $("suggDuration").textContent = `${dur.icon} ${dur.label}`;
     astate._current = a.id;
@@ -222,20 +233,122 @@
 
   function openInfo() {
     const a = astate.actions.find((x) => x.id === astate._current);
-    if (!a || !a.info) return;
+    if (!a || (!a.info && !a.link)) return;
     $("infoTitle").textContent = a.label;
-    $("infoBody").textContent = a.info;
+    $("infoBody").textContent = a.info || "";
+    $("infoBody").classList.toggle("hidden", !a.info);
+    const linkEl = $("infoLink");
+    if (a.link) {
+      linkEl.href = a.link.url;
+      linkEl.textContent = a.link.label;
+      linkEl.classList.remove("hidden");
+    } else {
+      linkEl.classList.add("hidden");
+    }
     $("infoOverlay").classList.remove("hidden");
   }
   function closeInfo() {
     $("infoOverlay").classList.add("hidden");
   }
 
+  // ---------- Bilan du jour ----------
+  // Récapitulatif chaleureux de ce qui a été fait, jamais de ce qui ne l'a
+  // pas été (cf. règle anti-dette du projet). Signalé par une vraie
+  // notification si le navigateur l'autorise ; sinon, ou si l'appli est
+  // fermée à ce moment-là (pas de serveur = pas de réveil en arrière-plan),
+  // le badge/l'entrée de menu prennent le relais dès la prochaine ouverture.
+  const EOD_HOUR = 20;
+  const REPORT_CHECK_MS = 60000;
+  function ensureDay() {
+    const key = todayKey();
+    if (astate.daily.dayKey !== key) {
+      astate.daily = emptyDaily();
+      save();
+    }
+  }
+  function maybeAskNotifPermission() {
+    if (astate.notifAsked) return;
+    astate.notifAsked = true;
+    if ("Notification" in window && Notification.permission === "default") {
+      try {
+        Notification.requestPermission();
+      } catch (e) {
+        // silencieux
+      }
+    }
+  }
+  function checkDailyReport() {
+    ensureDay();
+    if (astate.daily.done.length === 0) return;
+    if (astate.daily.reportShownAt === astate.daily.dayKey) return;
+    if (new Date().getHours() < EOD_HOUR) return;
+    astate.daily.reportShownAt = astate.daily.dayKey;
+    save();
+    if ("Notification" in window && Notification.permission === "granted") {
+      const n = astate.daily.done.length;
+      try {
+        const notif = new Notification("🪄 Petit bilan du jour", {
+          body: `${n} chose${n > 1 ? "s" : ""} faite${n > 1 ? "s" : ""} aujourd'hui. Jette un œil ?`,
+          icon: "icons/icon-192.png",
+        });
+        notif.onclick = () => {
+          window.focus();
+          openReport();
+          notif.close();
+        };
+      } catch (e) {
+        // silencieux : certains contextes n'autorisent pas le constructeur Notification
+      }
+    }
+  }
+  function renderDailyBadge() {
+    ensureDay();
+    const n = astate.daily.done.length;
+    $("dailyBadge").classList.toggle("hidden", n === 0);
+    $("dailyBadgeCount").textContent = n;
+  }
+  function renderReport() {
+    ensureDay();
+    const items = astate.daily.done;
+    const n = items.length;
+    $("reportSub").textContent = n === 0
+      ? "Rien coché pour l'instant aujourd'hui. Reviens quand tu auras fait quelque chose — ou lance une suggestion maintenant."
+      : `${n} chose${n > 1 ? "s" : ""} faite${n > 1 ? "s" : ""} aujourd'hui — c'est déjà ça de fait.`;
+    const list = $("reportList");
+    list.innerHTML = "";
+    items.slice().reverse().forEach((it) => {
+      const row = document.createElement("div");
+      row.className = "report-item";
+      const cat = CATEGORIES[it.category] || { icon: "•" };
+      const label = document.createElement("div");
+      label.className = "report-item-label";
+      label.textContent = `${cat.icon} ${it.label}`;
+      const time = document.createElement("div");
+      time.className = "report-item-time";
+      time.textContent = new Date(it.at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      row.appendChild(label);
+      row.appendChild(time);
+      list.appendChild(row);
+    });
+  }
+  function openReport() {
+    renderReport();
+    $("reportOverlay").classList.remove("hidden");
+  }
+  function closeReport() {
+    $("reportOverlay").classList.add("hidden");
+  }
+
   function markDone() {
     const a = astate.actions.find((x) => x.id === astate._current);
     if (a) {
       a.lastDoneAt = Date.now();
+      ensureDay();
+      astate.daily.done.push({ label: a.label, category: a.category, at: Date.now() });
+      maybeAskNotifPermission();
       save();
+      renderDailyBadge();
+      checkDailyReport();
     }
     declinedIds = [];
     renderSuggestion();
@@ -397,6 +510,7 @@
       declinedIds = [];
       lastDuration = null;
       renderSuggestion();
+      renderDailyBadge();
     } else if (name === "manage") {
       renderManage();
     }
@@ -418,6 +532,10 @@
   $("suggInfoBtn").onclick = openInfo;
   $("infoClose").onclick = closeInfo;
   $("infoOverlay").onclick = (e) => { if (e.target === $("infoOverlay")) closeInfo(); };
+  $("dailyBadge").onclick = openReport;
+  $("btnViewReport").onclick = openReport;
+  $("reportClose").onclick = closeReport;
+  $("reportOverlay").onclick = (e) => { if (e.target === $("reportOverlay")) closeReport(); };
   $("btnGear").onclick = () => {
     const managing = !$("screenManage").classList.contains("hidden");
     showScreen(managing ? "main" : "manage");
@@ -438,4 +556,10 @@
     renderOnboardingSwitches();
     showScreen("onboarding");
   }
+
+  checkDailyReport();
+  setInterval(checkDailyReport, REPORT_CHECK_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) checkDailyReport();
+  });
 })();

@@ -93,6 +93,12 @@
 
     /* ---------- Écran suggestion ---------- */
     .sugg-tagline { font-size: 13px; opacity: 0.6; text-align: center; font-style: italic; }
+    .daily-badge {
+      display: block; margin: 8px auto 0; padding: 6px 14px; border-radius: 999px;
+      border: 1px solid var(--border); background: rgba(91,227,169,0.08); color: var(--accent);
+      font-size: 12px; font-weight: 700;
+    }
+    .daily-badge:active { transform: scale(0.96); }
     .sugg-cat { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.55; text-align: center; margin-top: 14px; }
     .sugg-flower { font-size: 60px; text-align: center; margin-top: 8px; transition: transform 0.2s; }
     .sugg-flower.bloom-pop { animation: bloom-pop 0.4s ease; }
@@ -117,11 +123,24 @@
       box-shadow: 0 12px 40px rgba(0,0,0,0.5);
     }
     .info-card-title { font-weight: 800; font-size: 17px; margin-bottom: 10px; }
+    .info-card-sub { font-size: 13px; opacity: 0.65; margin-bottom: 12px; line-height: 1.5; }
     .info-card-body { font-size: 14px; line-height: 1.6; opacity: 0.9; white-space: pre-line; }
+    .info-card-link {
+      display: block; margin-top: 14px; text-align: center; text-decoration: none;
+      color: var(--accent); font-weight: 700; font-size: 14px;
+      border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+    }
     .info-card-close {
       margin-top: 18px; width: 100%; min-height: 46px; border-radius: 14px; border: none;
       background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 15px;
     }
+    .report-item {
+      display: flex; align-items: baseline; gap: 8px; padding: 8px 0;
+      border-bottom: 1px solid var(--border); font-size: 14px;
+    }
+    .report-item:last-child { border-bottom: none; }
+    .report-item-label { flex: 1; }
+    .report-item-time { font-size: 12px; opacity: 0.5; flex-shrink: 0; }
     .sugg-spacer { flex: 1; min-height: 16px; }
     .sugg-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
     .btn-done {
@@ -233,6 +252,7 @@
     <!-- Écran suggestion -->
     <div id="screenMain" class="hidden">
       <div class="sugg-tagline">Démarre juste, ça va rouler tout seul !</div>
+      <button class="daily-badge hidden" id="dailyBadge">🪄 <span id="dailyBadgeCount">0</span> fait aujourd'hui</button>
       <div id="suggestionBlock">
         <div class="sugg-cat" id="suggCat">Catégorie</div>
         <div class="sugg-flower" id="suggFlower">🌸</div>
@@ -259,6 +279,7 @@
     <div id="screenManage" class="hidden">
       <div class="manage-list" id="manageList"></div>
       <button class="btn-ghost-small manage-add-btn" id="btnShowAddForm">+ Ajouter une action</button>
+      <button class="btn-ghost-small manage-add-btn" id="btnViewReport">🪄 Voir le bilan du jour</button>
       <button class="btn-ghost-small manage-add-btn" id="btnReviewQuestions">🔁 Revoir les questions de départ</button>
       <div class="add-form hidden" id="addForm">
         <input type="text" id="newLabel" placeholder="Nom de l'action (ex : Trier la rubrique Impôts)" maxlength="60">
@@ -282,7 +303,17 @@
     <div class="info-card">
       <div class="info-card-title" id="infoTitle">Info</div>
       <div class="info-card-body" id="infoBody"></div>
+      <a class="info-card-link hidden" id="infoLink" target="_blank" rel="noopener noreferrer"></a>
       <button class="info-card-close" id="infoClose">Fermer</button>
+    </div>
+  </div>
+
+  <div class="info-overlay hidden" id="reportOverlay">
+    <div class="info-card">
+      <div class="info-card-title">🪄 Ton bilan du jour</div>
+      <div class="info-card-sub" id="reportSub"></div>
+      <div id="reportList"></div>
+      <button class="info-card-close" id="reportClose">Fermer</button>
     </div>
   </div>
 
