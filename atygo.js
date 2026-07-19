@@ -66,6 +66,7 @@
       { id: "h2", category: "health", label: "Prendre un médicament", hint: "", decayDays: 1, priority: 3, duration: 1 },
       { id: "h3", category: "health", label: "5 minutes d'étirement", hint: "", decayDays: 2, priority: 1, duration: 1 },
       { id: "h4", category: "health", label: "Appeler pour un rendez-vous médical", hint: "", decayDays: 21, priority: 2, duration: 1, dayOnly: true },
+      { id: "h5", category: "health", label: "Faire une séance de brain gym", hint: "Quelques mouvements croisés (ex : cross-crawl) pour relancer la concentration", decayDays: 2, priority: 1, duration: 2 },
 
       { id: "fi1", category: "finance", label: "Vérifier le solde du compte", hint: "", decayDays: 5, priority: 2, duration: 1 },
       { id: "fi2", category: "finance", label: "Faire un virement en attente", hint: "", decayDays: 10, priority: 2, duration: 1 },
