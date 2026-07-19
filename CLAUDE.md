@@ -106,9 +106,12 @@ par des sessions chronométrées).
   chargés sur les autres pages — pas de logique partagée nécessaire).
 - Questionnaire de démarrage (1 seul écran, 4 interrupteurs : voiture,
   animal, plantes, papiers/classeurs) affiché au tout premier
-  lancement, modifiable ensuite en réactivant les catégories
-  correspondantes dans l'écran de gestion (⚙️). "Passer" active tout
-  par défaut.
+  lancement. Revisitable à tout moment via "🔁 Revoir les questions
+  de départ" dans l'écran de gestion (⚙️) : ne réinitialise jamais
+  l'historique ni les actions personnalisées, se contente de
+  réappliquer l'activation par catégorie selon les nouvelles réponses
+  (`finishOnboarding()` distingue premier lancement vs revisite).
+  "Passer" active tout par défaut.
 - 13 catégories, ~30 actions par défaut (voir defaultActions() dans
   atygo.js) : Administratif, Papiers/classeurs (dont "trier une
   rubrique de classeur", demandé explicitement), Domestique léger,
@@ -119,12 +122,23 @@ par des sessions chronométrées).
   questionnaire).
 - Priorité (basse/normale/haute) × décroissance par action
   (decayDays) → urgence = priorité × (temps écoulé depuis "fait" /
-  décroissance). La plus urgente et non déclinée dans la session en
-  cours est proposée. "Fait !" mémorise l'instant (localStorage) et
-  réinitialise les refus de la session ; "Plus tard" décline
-  uniquement pour cette session et propose la suivante (même logique
-  de chaîne que "Plus tard" sur la modale Atycasa) ; si tout est
-  décliné, écran neutre ("tu as fait le tour") plutôt qu'une erreur.
+  décroissance). La plus urgente et non déclinée/non repoussée dans
+  la session en cours est proposée. Trois issues sur une suggestion :
+  - "Fait !" mémorise l'instant (localStorage) et réinitialise les
+    refus de la session.
+  - "Plus tard" décline pour cette session ET repousse l'action
+    (`snoozedUntil`) d'une durée proportionnelle à sa propre
+    échéance (`snoozeDurationMs()` : ~30 % du decayDays, plancher 1h,
+    plafond 24h — un repas de ce soir revient dans quelques heures,
+    une tâche à échéance large revient au plus tard le lendemain),
+    puis propose la suivante (même logique de chaîne que "Plus tard"
+    sur la modale Atycasa). Persistant : l'action ne revient pas tout
+    de suite même après avoir quitté/rouvert Atygo.
+  - "Ne plus proposer cette action" (lien discret sous "Plus tard")
+    désactive l'action directement depuis l'écran de suggestion,
+    sans repasser par l'écran de gestion.
+  Si tout est décliné/repoussé, écran neutre ("tu as fait le tour")
+  plutôt qu'une erreur.
 - Cohérence temporelle entre suggestions successives (deux mécanismes,
   jamais un simple filtre rigide) :
   - `dayOnly` sur une action (ex : prendre rdv, appeler, faire le

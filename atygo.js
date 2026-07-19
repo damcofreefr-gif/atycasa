@@ -159,10 +159,25 @@
     return h >= DAY_START_HOUR && h < DAY_END_HOUR;
   }
 
+  // Combien de temps "Plus tard" repousse une action : proportionnel à
+  // sa propre échéance (decayDays) plutôt qu'un délai fixe — un repas de
+  // ce soir (decayDays très court) revient dans quelques heures, une
+  // tâche à échéance large revient au plus tard le lendemain.
+  const MIN_SNOOZE_MS = 3600000; // 1h plancher
+  const MAX_SNOOZE_MS = 86400000; // 24h plafond ("au lendemain")
+  function snoozeDurationMs(a) {
+    const raw = (a.decayDays || 1) * 86400000 * 0.3;
+    return Math.max(MIN_SNOOZE_MS, Math.min(raw, MAX_SNOOZE_MS));
+  }
+
   function pickCandidate() {
     const now = Date.now();
     const pool = astate.actions.filter(
-      (a) => a.enabled && !declinedIds.includes(a.id) && isTimeOk(a, new Date(now))
+      (a) =>
+        a.enabled &&
+        !declinedIds.includes(a.id) &&
+        !(a.snoozedUntil && now < a.snoozedUntil) &&
+        isTimeOk(a, new Date(now))
     );
     if (pool.length === 0) return null;
     const COHERENCE_PENALTY = 0.6;
@@ -214,7 +229,20 @@
     renderSuggestion();
   }
   function declineCurrent() {
-    if (astate._current) declinedIds.push(astate._current);
+    const a = astate.actions.find((x) => x.id === astate._current);
+    if (a) {
+      declinedIds.push(a.id);
+      a.snoozedUntil = Date.now() + snoozeDurationMs(a);
+      save();
+    }
+    renderSuggestion();
+  }
+  function neverAgain() {
+    const a = astate.actions.find((x) => x.id === astate._current);
+    if (a) {
+      a.enabled = false;
+      save();
+    }
     renderSuggestion();
   }
 
@@ -233,8 +261,17 @@
     };
   }
   function finishOnboarding() {
-    astate.actions = seedActions(astate.prefs);
-    astate.onboarded = true;
+    if (astate.onboarded) {
+      // On revoit les questions après coup : on ne réinitialise pas les
+      // actions existantes (historique, personnalisées, priorités), on
+      // se contente de réappliquer l'activation par catégorie.
+      astate.actions.forEach((a) => {
+        if (a.gate) a.enabled = !!astate.prefs[a.gate];
+      });
+    } else {
+      astate.actions = seedActions(astate.prefs);
+      astate.onboarded = true;
+    }
     save();
     showScreen("main");
   }
@@ -365,6 +402,7 @@
   };
   $("btnDone").onclick = markDone;
   $("btnLaterAction").onclick = declineCurrent;
+  $("btnNeverAgain").onclick = neverAgain;
   $("btnGear").onclick = () => {
     const managing = !$("screenManage").classList.contains("hidden");
     showScreen(managing ? "main" : "manage");
@@ -373,6 +411,10 @@
   $("btnShowAddForm").onclick = () => $("addForm").classList.remove("hidden");
   $("btnCancelAdd").onclick = () => $("addForm").classList.add("hidden");
   $("btnAddAction").onclick = addCustomAction;
+  $("btnReviewQuestions").onclick = () => {
+    renderOnboardingSwitches();
+    showScreen("onboarding");
+  };
 
   if (astate.onboarded) {
     renderOnboardingSwitches(); // au cas où l'utilisateur revient sur ses choix un jour

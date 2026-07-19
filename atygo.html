@@ -113,6 +113,11 @@
       font-weight: 600; font-size: 14px; opacity: 0.85;
     }
     .btn-later:active { transform: scale(0.97); }
+    .btn-never {
+      display: block; width: 100%; text-align: center; margin-top: 6px;
+      background: transparent; border: none; color: var(--text); opacity: 0.5;
+      font-size: 12px; padding: 6px;
+    }
     .sugg-empty { text-align: center; padding: 30px 10px; opacity: 0.75; line-height: 1.6; }
     .sugg-empty .big { font-size: 44px; margin-bottom: 10px; }
 
@@ -221,6 +226,7 @@
       <div class="sugg-actions" id="suggActions">
         <button class="btn-done" id="btnDone">✓ Fait !</button>
         <button class="btn-later" id="btnLaterAction">Plus tard</button>
+        <button class="btn-never" id="btnNeverAgain">Ne plus proposer cette action</button>
       </div>
     </div>
 
@@ -228,6 +234,7 @@
     <div id="screenManage" class="hidden">
       <div class="manage-list" id="manageList"></div>
       <button class="btn-ghost-small manage-add-btn" id="btnShowAddForm">+ Ajouter une action</button>
+      <button class="btn-ghost-small manage-add-btn" id="btnReviewQuestions">🔁 Revoir les questions de départ</button>
       <div class="add-form hidden" id="addForm">
         <input type="text" id="newLabel" placeholder="Nom de l'action (ex : Trier la rubrique Impôts)" maxlength="60">
         <input type="text" id="newHint" placeholder="Précision pour démarrer (optionnel)" maxlength="100">
