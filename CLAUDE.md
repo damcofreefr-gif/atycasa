@@ -121,6 +121,20 @@ par des sessions chronométrées).
   uniquement pour cette session et propose la suivante (même logique
   de chaîne que "Plus tard" sur la modale Atycasa) ; si tout est
   décliné, écran neutre ("tu as fait le tour") plutôt qu'une erreur.
+- Cohérence temporelle entre suggestions successives (deux mécanismes,
+  jamais un simple filtre rigide) :
+  - `dayOnly` sur une action (ex : prendre rdv, appeler, faire le
+    plein) : jamais proposée hors de la plage 8h-21h (DAY_START_HOUR/
+    DAY_END_HOUR dans atygo.js), retirée du pool de candidats.
+  - `duration` (1 rapide <5 min / 2 moyen 10-20 min / 3 long 30 min+) :
+    un malus doux (COHERENCE_PENALTY, pas un blocage) pénalise l'écart
+    de durée avec la dernière action affichée/faite (`lastDuration`),
+    pour éviter d'enchaîner un gros chantier salissant après un coup
+    de fil de 2 min — sans jamais empêcher une action bien plus
+    urgente de passer devant. `lastDuration` se réinitialise à chaque
+    entrée fraîche sur l'écran principal (nouveau "point d'ancrage"
+    sans biais), et persiste entre "Fait !"/"Plus tard" au sein d'une
+    même session.
 - Personnalisable dans l'écran de gestion : activer/désactiver,
   cycler la priorité, supprimer les actions ajoutées par
   l'utilisateur (pas les actions par défaut, seulement désactivables),

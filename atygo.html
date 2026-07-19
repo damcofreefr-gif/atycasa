@@ -92,12 +92,14 @@
     }
 
     /* ---------- Écran suggestion ---------- */
-    .sugg-cat { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.55; text-align: center; }
+    .sugg-tagline { font-size: 13px; opacity: 0.6; text-align: center; font-style: italic; }
+    .sugg-cat { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.55; text-align: center; margin-top: 14px; }
     .sugg-flower { font-size: 60px; text-align: center; margin-top: 8px; transition: transform 0.2s; }
     .sugg-flower.bloom-pop { animation: bloom-pop 0.4s ease; }
     @keyframes bloom-pop { 0%{transform:scale(0.8);} 50%{transform:scale(1.18);} 100%{transform:scale(1);} }
     .sugg-label { font-size: 22px; font-weight: 800; text-align: center; margin-top: 12px; line-height: 1.25; }
     .sugg-hint { font-size: 14px; opacity: 0.75; text-align: center; margin-top: 8px; line-height: 1.4; }
+    .sugg-duration { font-size: 12px; opacity: 0.55; text-align: center; margin-top: 10px; }
     .sugg-spacer { flex: 1; min-height: 16px; }
     .sugg-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
     .btn-done {
@@ -197,11 +199,13 @@
 
     <!-- Écran suggestion -->
     <div id="screenMain" class="hidden">
+      <div class="sugg-tagline">Démarre juste, ça va rouler tout seul !</div>
       <div id="suggestionBlock">
         <div class="sugg-cat" id="suggCat">Catégorie</div>
         <div class="sugg-flower" id="suggFlower">🌸</div>
         <div class="sugg-label" id="suggLabel">Action</div>
         <div class="sugg-hint" id="suggHint">Précision</div>
+        <div class="sugg-duration" id="suggDuration">Durée</div>
       </div>
       <div id="emptyBlock" class="sugg-empty hidden">
         <div class="big">🌤️</div>
@@ -222,6 +226,11 @@
         <input type="text" id="newLabel" placeholder="Nom de l'action (ex : Trier la rubrique Impôts)" maxlength="60">
         <input type="text" id="newHint" placeholder="Précision pour démarrer (optionnel)" maxlength="100">
         <select id="newCategory"></select>
+        <select id="newDuration"></select>
+        <div class="onb-question" style="padding:6px 4px;">
+          <div class="onb-q-label" style="font-size:13px;">Seulement en journée ?</div>
+          <button class="switch" id="newDayOnly"></button>
+        </div>
         <div class="add-form-actions">
           <button class="btn-primary" id="btnAddAction">Ajouter</button>
           <button class="btn-ghost-small" id="btnCancelAdd">Annuler</button>

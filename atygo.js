@@ -27,54 +27,68 @@
     pets: { label: "Animaux", icon: "🐾" },
   };
 
+  const DURATIONS = {
+    1: { icon: "⚡", label: "Rapide (< 5 min)" },
+    2: { icon: "⏱️", label: "Moyen (10-20 min)" },
+    3: { icon: "🕓", label: "Long (30 min+)" },
+  };
+  const DAY_START_HOUR = 8;
+  const DAY_END_HOUR = 21;
+
   // decayDays : au bout de combien de jours l'action redevient "à faire"
   // (repère indicatif, pas une science exacte). priority : 1 basse,
   // 2 normale, 3 haute — pondère l'urgence à décroissance égale.
+  // duration : 1 rapide (<5 min), 2 moyen (10-20 min), 3 long (30 min+)
+  // — sert à ne pas enchaîner un gros chantier salissant après un coup
+  // de fil de 2 min, ou l'inverse (cohérence entre suggestions
+  // successives, cf. dayOnly ci-dessous pour le pendant horaire).
+  // dayOnly : n'a de sens qu'en journée (démarches, sorties, gros
+  // travaux) — jamais proposé la nuit.
   function defaultActions() {
     return [
-      { id: "a1", category: "admin", label: "Traiter une facture en attente", hint: "Ouvre l'appli ou le mail de la facture et prépare le paiement", decayDays: 10, priority: 2 },
-      { id: "a2", category: "admin", label: "Répondre à un mail qui traîne", hint: "Ouvre ta boîte mail et réponds au plus vieux message", decayDays: 5, priority: 2 },
-      { id: "a3", category: "admin", label: "Prendre un rendez-vous", hint: "Choisis UN rendez-vous à prendre et ouvre le téléphone ou le site", decayDays: 14, priority: 2 },
-      { id: "a4", category: "admin", label: "Renouveler un document", hint: "Identifie le document à renouveler et ouvre le site concerné", decayDays: 30, priority: 1 },
+      { id: "a1", category: "admin", label: "Traiter une facture en attente", hint: "Ouvre l'appli ou le mail de la facture et prépare le paiement", decayDays: 10, priority: 2, duration: 2 },
+      { id: "a2", category: "admin", label: "Répondre à un mail qui traîne", hint: "Ouvre ta boîte mail et réponds au plus vieux message", decayDays: 5, priority: 2, duration: 1 },
+      { id: "a3", category: "admin", label: "Prendre un rendez-vous", hint: "Choisis UN rendez-vous à prendre et ouvre le téléphone ou le site", decayDays: 14, priority: 2, duration: 1, dayOnly: true },
+      { id: "a4", category: "admin", label: "Renouveler un document", hint: "Identifie le document à renouveler et ouvre le site concerné", decayDays: 30, priority: 1, duration: 2 },
 
-      { id: "p1", category: "papers", label: "Trier une rubrique de classeur", hint: "Choisis UNE rubrique (ex : factures, impôts…) et range juste ça", decayDays: 14, priority: 2, gate: "papers" },
+      { id: "p1", category: "papers", label: "Trier une rubrique de classeur", hint: "Choisis UNE rubrique (ex : factures, impôts…) et range juste ça", decayDays: 14, priority: 2, duration: 2, gate: "papers" },
 
-      { id: "d1", category: "domestic", label: "Sortir une poubelle", hint: "", decayDays: 3, priority: 2 },
-      { id: "d2", category: "domestic", label: "Lancer une lessive", hint: "", decayDays: 4, priority: 2 },
-      { id: "d3", category: "domestic", label: "Vider le lave-vaisselle ou l'évier", hint: "", decayDays: 2, priority: 2 },
+      { id: "d1", category: "domestic", label: "Sortir une poubelle", hint: "", decayDays: 3, priority: 2, duration: 1 },
+      { id: "d2", category: "domestic", label: "Lancer une lessive", hint: "", decayDays: 4, priority: 2, duration: 1 },
+      { id: "d3", category: "domestic", label: "Vider le lave-vaisselle ou l'évier", hint: "", decayDays: 2, priority: 2, duration: 1 },
 
-      { id: "f1", category: "food", label: "Décider du repas de ce soir", hint: "", decayDays: 1, priority: 2 },
-      { id: "f2", category: "food", label: "Noter ce qui manque au frigo", hint: "Juste une note rapide, pas besoin d'aller faire les courses tout de suite", decayDays: 3, priority: 1 },
-      { id: "f3", category: "food", label: "Préparer une gourde ou un lunch pour demain", hint: "", decayDays: 1, priority: 1 },
+      { id: "f1", category: "food", label: "Décider du repas de ce soir", hint: "", decayDays: 1, priority: 2, duration: 1 },
+      { id: "f2", category: "food", label: "Noter ce qui manque au frigo", hint: "Juste une note rapide, pas besoin d'aller faire les courses tout de suite", decayDays: 3, priority: 1, duration: 1 },
+      { id: "f3", category: "food", label: "Préparer une gourde ou un lunch pour demain", hint: "", decayDays: 1, priority: 1, duration: 1 },
 
-      { id: "h1", category: "health", label: "Boire un verre d'eau", hint: "", decayDays: 0.5, priority: 3 },
-      { id: "h2", category: "health", label: "Prendre un médicament", hint: "", decayDays: 1, priority: 3 },
-      { id: "h3", category: "health", label: "5 minutes d'étirement", hint: "", decayDays: 2, priority: 1 },
-      { id: "h4", category: "health", label: "Appeler pour un rendez-vous médical", hint: "", decayDays: 21, priority: 2 },
+      { id: "h1", category: "health", label: "Boire un verre d'eau", hint: "", decayDays: 0.5, priority: 3, duration: 1 },
+      { id: "h2", category: "health", label: "Prendre un médicament", hint: "", decayDays: 1, priority: 3, duration: 1 },
+      { id: "h3", category: "health", label: "5 minutes d'étirement", hint: "", decayDays: 2, priority: 1, duration: 1 },
+      { id: "h4", category: "health", label: "Appeler pour un rendez-vous médical", hint: "", decayDays: 21, priority: 2, duration: 1, dayOnly: true },
 
-      { id: "fi1", category: "finance", label: "Vérifier le solde du compte", hint: "", decayDays: 5, priority: 2 },
-      { id: "fi2", category: "finance", label: "Faire un virement en attente", hint: "", decayDays: 10, priority: 2 },
+      { id: "fi1", category: "finance", label: "Vérifier le solde du compte", hint: "", decayDays: 5, priority: 2, duration: 1 },
+      { id: "fi2", category: "finance", label: "Faire un virement en attente", hint: "", decayDays: 10, priority: 2, duration: 1 },
 
-      { id: "c1", category: "comm", label: "Répondre à un message en attente", hint: "Un seul suffit pour l'instant", decayDays: 3, priority: 2 },
-      { id: "c2", category: "comm", label: "Passer un appel repoussé", hint: "", decayDays: 5, priority: 1 },
+      { id: "c1", category: "comm", label: "Répondre à un message en attente", hint: "Un seul suffit pour l'instant", decayDays: 3, priority: 2, duration: 1 },
+      { id: "c2", category: "comm", label: "Passer un appel repoussé", hint: "", decayDays: 5, priority: 1, duration: 1, dayOnly: true },
 
-      { id: "o1", category: "organize", label: "Vérifier l'agenda de demain", hint: "", decayDays: 1, priority: 2 },
-      { id: "o2", category: "organize", label: "Préparer un sac (travail, sport, sortie)", hint: "", decayDays: 2, priority: 1 },
-      { id: "o3", category: "organize", label: "Noter une idée qui tourne en tête", hint: "", decayDays: 3, priority: 1 },
+      { id: "o1", category: "organize", label: "Vérifier l'agenda de demain", hint: "", decayDays: 1, priority: 2, duration: 1 },
+      { id: "o2", category: "organize", label: "Préparer un sac (travail, sport, sortie)", hint: "", decayDays: 2, priority: 1, duration: 1 },
+      { id: "o3", category: "organize", label: "Noter une idée qui tourne en tête", hint: "", decayDays: 3, priority: 1, duration: 1 },
 
-      { id: "v1", category: "vehicle", label: "Faire le plein", hint: "", decayDays: 7, priority: 2, gate: "car" },
-      { id: "v2", category: "vehicle", label: "Vérifier un trajet ou un billet", hint: "", decayDays: 14, priority: 1, gate: "car" },
+      { id: "v1", category: "vehicle", label: "Faire le plein", hint: "", decayDays: 7, priority: 2, duration: 2, dayOnly: true, gate: "car" },
+      { id: "v2", category: "vehicle", label: "Vérifier un trajet ou un billet", hint: "", decayDays: 14, priority: 1, duration: 1, gate: "car" },
 
-      { id: "n1", category: "digital", label: "Vider les indésirables de la boîte mail", hint: "", decayDays: 10, priority: 1 },
-      { id: "n2", category: "digital", label: "Trier 5 photos", hint: "Juste 5, pas toute la pellicule", decayDays: 14, priority: 1 },
-      { id: "n3", category: "digital", label: "Sauvegarder un fichier important", hint: "", decayDays: 21, priority: 1 },
+      { id: "n1", category: "digital", label: "Vider les indésirables de la boîte mail", hint: "", decayDays: 10, priority: 1, duration: 1 },
+      { id: "n2", category: "digital", label: "Trier 5 photos", hint: "Juste 5, pas toute la pellicule", decayDays: 14, priority: 1, duration: 1 },
+      { id: "n3", category: "digital", label: "Sauvegarder un fichier important", hint: "", decayDays: 21, priority: 1, duration: 1 },
 
-      { id: "s1", category: "space", label: "Ranger un coin précis", hint: "Un seul coin, pas toute la pièce", decayDays: 5, priority: 1 },
-      { id: "s2", category: "space", label: "Jeter le courrier périmé", hint: "", decayDays: 7, priority: 1 },
+      { id: "s1", category: "space", label: "Ranger un coin précis", hint: "Un seul coin, pas toute la pièce", decayDays: 5, priority: 1, duration: 2 },
+      { id: "s2", category: "space", label: "Jeter le courrier périmé", hint: "", decayDays: 7, priority: 1, duration: 1 },
 
-      { id: "pe1", category: "pets", label: "Nourrir / donner à boire", hint: "", decayDays: 0.5, priority: 3, gate: "pet" },
-      { id: "pe2", category: "pets", label: "Nettoyer litière ou gamelle", hint: "", decayDays: 2, priority: 2, gate: "pet" },
-      { id: "pe3", category: "pets", label: "Sortir promener", hint: "", decayDays: 1, priority: 2, gate: "pet" },
+      { id: "pe1", category: "pets", label: "Nourrir / donner à boire", hint: "", decayDays: 0.5, priority: 3, duration: 1, gate: "pet" },
+      { id: "pe2", category: "pets", label: "Nettoyer litière ou gamelle", hint: "", decayDays: 2, priority: 2, duration: 1, gate: "pet" },
+      { id: "pe3", category: "pets", label: "Sortir promener", hint: "", decayDays: 1, priority: 2, duration: 2, gate: "pet" },
     ];
   }
 
@@ -131,11 +145,29 @@
 
   // ---------- Suggestion ----------
   let declinedIds = [];
+  // Durée de la dernière action affichée/faite dans cette session : sert
+  // à privilégier une suite cohérente (pas de saut rapide <-> long entre
+  // deux suggestions) sans jamais bloquer une action bien plus urgente.
+  let lastDuration = null;
+
+  function isTimeOk(a, now) {
+    if (!a.dayOnly) return true;
+    const h = now.getHours();
+    return h >= DAY_START_HOUR && h < DAY_END_HOUR;
+  }
+
   function pickCandidate() {
     const now = Date.now();
-    const pool = astate.actions.filter((a) => a.enabled && !declinedIds.includes(a.id));
+    const pool = astate.actions.filter(
+      (a) => a.enabled && !declinedIds.includes(a.id) && isTimeOk(a, new Date(now))
+    );
     if (pool.length === 0) return null;
-    return [...pool].sort((a, b) => urgencyOf(b, now) - urgencyOf(a, now))[0];
+    const COHERENCE_PENALTY = 0.6;
+    return [...pool].sort((a, b) => {
+      const scoreA = urgencyOf(a, now) - (lastDuration ? Math.abs((a.duration || 1) - lastDuration) * COHERENCE_PENALTY : 0);
+      const scoreB = urgencyOf(b, now) - (lastDuration ? Math.abs((b.duration || 1) - lastDuration) * COHERENCE_PENALTY : 0);
+      return scoreB - scoreA;
+    })[0];
   }
 
   function renderSuggestion() {
@@ -163,7 +195,10 @@
     $("suggLabel").textContent = a.label;
     $("suggHint").textContent = a.hint || "";
     $("suggHint").classList.toggle("hidden", !a.hint);
+    const dur = DURATIONS[a.duration || 1];
+    $("suggDuration").textContent = `${dur.icon} ${dur.label}`;
     astate._current = a.id;
+    lastDuration = a.duration || 1;
   }
 
   function markDone() {
@@ -265,16 +300,26 @@
       .map((id) => `<option value="${id}">${CATEGORIES[id].icon} ${CATEGORIES[id].label}</option>`)
       .join("");
   }
+  function populateDurationSelect() {
+    const sel = $("newDuration");
+    sel.innerHTML = Object.keys(DURATIONS)
+      .map((id) => `<option value="${id}">${DURATIONS[id].icon} ${DURATIONS[id].label}</option>`)
+      .join("");
+  }
   function addCustomAction() {
     const label = $("newLabel").value.trim();
     if (!label) return;
     const hint = $("newHint").value.trim();
     const category = $("newCategory").value;
+    const duration = +$("newDuration").value;
+    const dayOnly = $("newDayOnly").classList.contains("on");
     astate.actions.push({
       id: uid(),
       category,
       label,
       hint,
+      duration,
+      dayOnly,
       decayDays: 7,
       priority: 2,
       enabled: true,
@@ -284,6 +329,7 @@
     save();
     $("newLabel").value = "";
     $("newHint").value = "";
+    $("newDayOnly").classList.remove("on");
     $("addForm").classList.add("hidden");
     renderManage();
   }
@@ -296,6 +342,7 @@
     $("btnGear").classList.toggle("hidden", name === "onboarding");
     if (name === "main") {
       declinedIds = [];
+      lastDuration = null;
       renderSuggestion();
     } else if (name === "manage") {
       renderManage();
@@ -304,6 +351,8 @@
 
   // ---------- Init ----------
   populateCategorySelect();
+  populateDurationSelect();
+  $("newDayOnly").onclick = () => $("newDayOnly").classList.toggle("on");
   [$("qCar"), $("qPet"), $("qPapers")].forEach(bindSwitch);
   $("btnOnbStart").onclick = finishOnboarding;
   $("btnOnbSkip").onclick = () => {
