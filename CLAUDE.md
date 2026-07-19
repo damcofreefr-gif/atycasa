@@ -93,6 +93,44 @@ par des sessions chronométrées).
   produit) s'applique aussi à Atyclock : un rappel manqué n'est jamais
   présenté comme un échec ou un retard.
 
+## Atygo (déblocage / démarrage d'action)
+- Bouton ⚡ dans l'en-tête d'Atycasa (à gauche du bouton 🕐). Rôle :
+  débloquer l'indécision face à la multiplication des tâches de
+  logistique du quotidien, à n'importe quel moment de la journée —
+  jamais spécifiquement "routine du matin". Propose UNE seule
+  micro-action précise à la fois (jamais une liste à trier soi-même),
+  volontairement indépendant d'Atycasa/Atyclock (aucun lien de
+  données) même s'il réutilise le même langage visuel (fleur =
+  urgence) pour rester cohérent avec le reste de l'app.
+- Fichiers atygo.html + atygo.js (mêmes contraintes vanilla, non
+  chargés sur les autres pages — pas de logique partagée nécessaire).
+- Questionnaire de démarrage (1 seul écran, 3 interrupteurs : voiture,
+  animal, papiers/classeurs) affiché au tout premier lancement,
+  modifiable ensuite en réactivant les catégories correspondantes
+  dans l'écran de gestion (⚙️). "Passer" active tout par défaut.
+- 12 catégories, ~30 actions par défaut (voir defaultActions() dans
+  atygo.js) : Administratif, Papiers/classeurs (dont "trier une
+  rubrique de classeur", demandé explicitement), Domestique léger,
+  Alimentation, Santé, Finances, Communication, Organisation,
+  Véhicule, Numérique, Espace de vie, Animaux.
+- Priorité (basse/normale/haute) × décroissance par action
+  (decayDays) → urgence = priorité × (temps écoulé depuis "fait" /
+  décroissance). La plus urgente et non déclinée dans la session en
+  cours est proposée. "Fait !" mémorise l'instant (localStorage) et
+  réinitialise les refus de la session ; "Plus tard" décline
+  uniquement pour cette session et propose la suivante (même logique
+  de chaîne que "Plus tard" sur la modale Atycasa) ; si tout est
+  décliné, écran neutre ("tu as fait le tour") plutôt qu'une erreur.
+- Personnalisable dans l'écran de gestion : activer/désactiver,
+  cycler la priorité, supprimer les actions ajoutées par
+  l'utilisateur (pas les actions par défaut, seulement désactivables),
+  ajouter une action libre (nom + précision + catégorie) — c'est
+  ainsi qu'on nomme des rubriques de classeur spécifiques (ex :
+  "Trier la rubrique Impôts").
+- Données : localStorage clé "atygo-v1", {onboarded, prefs: {car,
+  pet, papers}, actions: [{id, category, label, hint, decayDays,
+  priority, enabled, lastDoneAt, custom}]}.
+
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
   Déploiement = push des fichiers statiques tels quels sur GitHub Pages.

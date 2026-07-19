@@ -507,6 +507,7 @@ function bindEvents() {
   document.querySelectorAll(".tab").forEach((b) => {
     b.onclick = () => switchTab(b.dataset.tab);
   });
+  $("btnAtygo").onclick = () => { location.href = "atygo.html"; };
 
   // Peinture sur la grille (tactile + souris)
   const grid = $("grid");

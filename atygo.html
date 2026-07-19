@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#16130F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Atygo · Atycasa</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg1: #16130F;
+      --bg2: #221C15;
+      --surface: rgba(255,255,255,0.05);
+      --surface2: #241E17;
+      --text: #EAF4F0;
+      --accent: #5BE3A9;
+      --accent-dark: #16130F;
+      --border: rgba(255,255,255,0.12);
+    }
+    * {
+      box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
+      -ms-user-select: none; user-select: none;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
+    body {
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+      padding: max(14px, env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    input, textarea, select { font-family: inherit; }
+    .hidden { display: none !important; }
+
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .back-btn, .gear-btn {
+      position: relative;
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 8px 12px; font-size: 16px;
+    }
+    .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+
+    .card {
+      background: var(--surface2); border-radius: 20px; padding: 20px 22px;
+      width: 100%; max-width: 420px; margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+    }
+    /* Les trois écrans remplissent la carte (nécessaire pour que
+       margin-top:auto / .sugg-spacer poussent leur contenu en bas). */
+    #screenOnboarding, #screenMain, #screenManage {
+      display: flex; flex-direction: column; flex: 1; min-height: 0;
+    }
+
+    /* ---------- Écran questionnaire ---------- */
+    .onb-intro { font-size: 14px; opacity: 0.8; line-height: 1.5; margin-bottom: 18px; }
+    .onb-question {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 4px; border-bottom: 1px solid var(--border);
+    }
+    .onb-question:last-of-type { border-bottom: none; }
+    .onb-q-label { font-size: 15px; font-weight: 600; }
+    .onb-q-hint { font-size: 12px; opacity: 0.6; margin-top: 2px; }
+    .switch {
+      position: relative; width: 48px; height: 28px; border-radius: 999px;
+      background: rgba(255,255,255,0.12); border: none; flex-shrink: 0;
+    }
+    .switch::after {
+      content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+      border-radius: 999px; background: #8a8f8c; transition: transform 0.2s, background 0.2s;
+    }
+    .switch.on { background: rgba(91,227,169,0.25); }
+    .switch.on::after { background: var(--accent); transform: translateX(20px); }
+    .onb-actions { margin-top: auto; padding-top: 18px; }
+    .btn-primary {
+      width: 100%; min-height: 56px; padding: 14px; border-radius: 16px; border: none;
+      background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 17px;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .onb-skip {
+      display: block; width: 100%; text-align: center; margin-top: 10px;
+      background: transparent; border: none; color: var(--text); opacity: 0.6; font-size: 13px; padding: 8px;
+    }
+
+    /* ---------- Écran suggestion ---------- */
+    .sugg-cat { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.55; text-align: center; }
+    .sugg-flower { font-size: 60px; text-align: center; margin-top: 8px; transition: transform 0.2s; }
+    .sugg-flower.bloom-pop { animation: bloom-pop 0.4s ease; }
+    @keyframes bloom-pop { 0%{transform:scale(0.8);} 50%{transform:scale(1.18);} 100%{transform:scale(1);} }
+    .sugg-label { font-size: 22px; font-weight: 800; text-align: center; margin-top: 12px; line-height: 1.25; }
+    .sugg-hint { font-size: 14px; opacity: 0.75; text-align: center; margin-top: 8px; line-height: 1.4; }
+    .sugg-spacer { flex: 1; min-height: 16px; }
+    .sugg-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .btn-done {
+      width: 100%; min-height: 64px; padding: 14px; border-radius: 16px; border: none;
+      background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 18px;
+    }
+    .btn-done:active { transform: scale(0.98); }
+    .btn-later {
+      width: 100%; min-height: 46px; padding: 10px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2); background: transparent; color: var(--text);
+      font-weight: 600; font-size: 14px; opacity: 0.85;
+    }
+    .btn-later:active { transform: scale(0.97); }
+    .sugg-empty { text-align: center; padding: 30px 10px; opacity: 0.75; line-height: 1.6; }
+    .sugg-empty .big { font-size: 44px; margin-bottom: 10px; }
+
+    /* ---------- Écran gestion ---------- */
+    .manage-list { overflow-y: auto; flex: 1; margin: 0 -6px; padding: 0 6px; }
+    .manage-cat-title {
+      font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.55;
+      margin: 16px 0 6px;
+    }
+    .manage-cat-title:first-child { margin-top: 0; }
+    .action-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px;
+    }
+    .action-row.disabled { opacity: 0.45; }
+    .action-row-text { flex: 1; min-width: 0; }
+    .action-row-label { font-size: 14px; font-weight: 600; }
+    .action-row-hint { font-size: 11px; opacity: 0.6; margin-top: 1px; }
+    .prio-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 8px; padding: 5px 8px; font-size: 11px; font-weight: 700; opacity: 0.8; flex-shrink: 0;
+    }
+    .del-btn {
+      border: none; background: transparent; color: var(--text); opacity: 0.5;
+      font-size: 16px; padding: 4px 6px; flex-shrink: 0;
+    }
+    .add-form {
+      background: var(--surface); border-radius: 14px; padding: 14px; margin-top: 10px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .add-form input, .add-form select {
+      width: 100%; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg1); color: var(--text); font-size: 14px;
+    }
+    .add-form-actions { display: flex; gap: 8px; }
+    .add-form-actions button { flex: 1; }
+    .btn-ghost-small {
+      min-height: 42px; padding: 10px 16px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2); background: transparent;
+      color: var(--text); font-size: 14px; font-weight: 600; opacity: 0.85;
+    }
+    .manage-add-btn { margin-top: 14px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sugg-flower.bloom-pop { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="h-title">⚡ Atygo</div>
+    <button class="gear-btn hidden" id="btnGear" aria-label="Gérer mes actions">⚙️</button>
+    <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡</button>
+  </div>
+
+  <div class="card">
+
+    <!-- Écran questionnaire -->
+    <div id="screenOnboarding" class="hidden">
+      <div class="onb-intro">Quelques questions rapides pour n'afficher que ce qui te concerne. Tu pourras changer ça plus tard.</div>
+      <div class="onb-question">
+        <div>
+          <div class="onb-q-label">🚗 As-tu une voiture ?</div>
+        </div>
+        <button class="switch" id="qCar" data-key="car"></button>
+      </div>
+      <div class="onb-question">
+        <div>
+          <div class="onb-q-label">🐾 As-tu un animal ?</div>
+        </div>
+        <button class="switch" id="qPet" data-key="pet"></button>
+      </div>
+      <div class="onb-question">
+        <div>
+          <div class="onb-q-label">🗂️ Des papiers/classeurs à trier ?</div>
+        </div>
+        <button class="switch" id="qPapers" data-key="papers"></button>
+      </div>
+      <div class="onb-actions">
+        <button class="btn-primary" id="btnOnbStart">C'est parti</button>
+        <button class="onb-skip" id="btnOnbSkip">Passer, tout activer par défaut</button>
+      </div>
+    </div>
+
+    <!-- Écran suggestion -->
+    <div id="screenMain" class="hidden">
+      <div id="suggestionBlock">
+        <div class="sugg-cat" id="suggCat">Catégorie</div>
+        <div class="sugg-flower" id="suggFlower">🌸</div>
+        <div class="sugg-label" id="suggLabel">Action</div>
+        <div class="sugg-hint" id="suggHint">Précision</div>
+      </div>
+      <div id="emptyBlock" class="sugg-empty hidden">
+        <div class="big">🌤️</div>
+        <div>Tu as fait le tour de tes actions pour l'instant.<br>Reviens plus tard, ou gère ta liste.</div>
+      </div>
+      <div class="sugg-spacer"></div>
+      <div class="sugg-actions" id="suggActions">
+        <button class="btn-done" id="btnDone">✓ Fait !</button>
+        <button class="btn-later" id="btnLaterAction">Plus tard</button>
+      </div>
+    </div>
+
+    <!-- Écran gestion -->
+    <div id="screenManage" class="hidden">
+      <div class="manage-list" id="manageList"></div>
+      <button class="btn-ghost-small manage-add-btn" id="btnShowAddForm">+ Ajouter une action</button>
+      <div class="add-form hidden" id="addForm">
+        <input type="text" id="newLabel" placeholder="Nom de l'action (ex : Trier la rubrique Impôts)" maxlength="60">
+        <input type="text" id="newHint" placeholder="Précision pour démarrer (optionnel)" maxlength="100">
+        <select id="newCategory"></select>
+        <div class="add-form-actions">
+          <button class="btn-primary" id="btnAddAction">Ajouter</button>
+          <button class="btn-ghost-small" id="btnCancelAdd">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="atygo.js"></script>
+</body>
+</html>
