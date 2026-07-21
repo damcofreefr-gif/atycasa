@@ -47,12 +47,12 @@
 
   <h1>🛠️ Admin Atycasa</h1>
   <p class="sub">
-    Page non liée dans la navigation de l'app — accessible seulement par
-    cette URL directe. Aucun compte utilisateur n'existe dans Atycasa
-    aujourd'hui (choix produit, zéro friction) : cette page reste donc
-    ouverte par défaut. Si un flow d'inscription est créé un jour, elle
-    devra être restreinte au compte de Dam's uniquement — voir
-    <code>topos_sessions/notes.md</code>.
+    Page non liée dans la navigation de l'app. Toute l'appli (y compris
+    cette page) est protégée par un code d'accès vérifié côté serveur
+    (Edge Middleware Vercel) — voir <code>invite.html</code> et
+    <code>middleware.js</code>. Cette page spécifiquement n'est
+    accessible qu'avec le code admin, distinct du code général donné
+    aux personnes invitées.
   </p>
 
   <div class="card">
