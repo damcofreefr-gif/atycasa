@@ -8,9 +8,13 @@ TDAH. Principe central : réduire la friction et la culpabilité à zéro.
 Plan de maison en pixel-art, fraîcheur des zones qui se dégrade (jamais
 de "retard" affiché), sessions chronométrées type "arrosage".
 
-- Repo : `damcofreefr-gif/atycasa` (public), branche `main`.
-- Vanilla JS pur, aucun framework/bundler/build. Déploiement = push des
-  fichiers statiques sur GitHub Pages.
+- Repo : `damcofreefr-gif/atycasa` (public à ce jour — passage en privé
+  prévu, manuel, voir plus bas), branche `main` en production, mais les
+  derniers commits (verrou d'accès inclus) sont pour l'instant sur
+  `claude/atyroad-vehicle-selection-m10nrq`, pas encore mergés.
+- Vanilla JS pur, aucun framework/bundler/build. Hébergement réel :
+  **Vercel** (confirmé le 21/07 — CLAUDE.md mentionne encore GitHub
+  Pages, à corriger/vérifier, incohérence non résolue dans ce cycle).
 - Aucun backend, aucun compte utilisateur — tout en `localStorage`
   (clé `maison-v1`). Seule exception : Atynote (bloc-note partagé),
   qui utilise Firebase Realtime Database pour le partage en direct
@@ -65,6 +69,83 @@ de "retard" affiché), sessions chronométrées type "arrosage".
   tout le projet, justifiée par le besoin de partage en direct entre
   deux téléphones.
 
+**Verrou d'accès (21/07, en fin de journée)**
+- Repo passé en revue pour la sécurité : `android.keystore` n'existe
+  pas ici (c'est un sujet Atyroad), mais la question posée était plus
+  large — "sécuriser les applis pour qu'aucun inconnu ne puisse s'y
+  connecter, et sécuriser aussi les repos".
+- Un premier réflexe (QR code + petit contrôle en JS côté client) a été
+  écarté après explication : sur un site 100% statique, un contrôle en
+  JS classique est lisible et contournable par n'importe qui ouvrant les
+  devtools — ça décourage un curieux, ça n'empêche pas un visiteur un
+  peu motivé.
+- Solution retenue : **Edge Middleware Vercel**. Ce code tourne côté
+  serveur Vercel, avant même que la page ne soit envoyée au navigateur
+  — il n'est jamais visible ni modifiable depuis le poste du visiteur,
+  contrairement à du JS embarqué dans la page. Gratuit sur le plan
+  Vercel actuel (Hobby), fonctionne sur l'URL `*.vercel.app` par défaut
+  (pas besoin d'acheter un nom de domaine).
+- Fichiers ajoutés : `middleware.js` (la vérification elle-même) et
+  `invite.html` (petit écran "entre ton code d'accès").
+- Deux codes secrets distincts, à configurer par Dam's dans les
+  variables d'environnement Vercel (jamais dans le code, jamais dans
+  git) :
+  - `ATYCASA_INVITE_CODE` — le code "grand public" à partager (lien ou
+    QR code) aux personnes invitées.
+  - `ATYCASA_ADMIN_CODE` — un code séparé, réservé à Dam's, qui donne
+    en plus accès à `admin.html`.
+  - `ATYCASA_COOKIE_SECRET` — sert uniquement à signer les cookies,
+    jamais partagé avec personne.
+- **Tant que ces variables ne sont pas configurées côté Vercel, rien
+  n'est bloqué** — le middleware laisse tout passer par défaut
+  (choix délibéré, pour ne jamais casser l'appli par erreur de config).
+  Donc à ce jour (21/07), l'appli est toujours ouverte à tous comme
+  avant. Voir `notes.md` pour la checklist exacte de mise en service.
+
+### Implications pour ta propre connexion (Dam's)
+
+- Une fois les variables configurées, **toi aussi tu seras bloqué** au
+  premier accès si tu arrives sans code (par ex. via un vieux favori
+  dans ton navigateur) — il n'y a pas de compte "propriétaire"
+  reconnu automatiquement, uniquement la possession du bon code.
+- Pour retrouver l'accès complet (y compris `admin.html`), il te faudra
+  visiter une fois une URL contenant ton code admin
+  (`?invite=TON_CODE_ADMIN`). Un cookie est alors posé sur cet
+  appareil/navigateur précis, valable 1 an — pas besoin de le refaire à
+  chaque visite ni de changer d'appareil pour ça, mais un nouvel
+  appareil ou un navigateur différent (ou un mode privé) redemandera le
+  code.
+- Le code admin donne accès à tout, y compris ce que voient les
+  personnes invitées avec le code général — tu n'as donc besoin que
+  d'un seul lien pour toi-même.
+
+### Implications pour les autres personnes (invités)
+
+- Une personne sans aucun code n'a plus aucun accès à l'appli, y
+  compris aux fichiers statiques (icônes, manifest, service worker) —
+  le blocage est volontairement large (`matcher: '/:path*'`, tout est
+  concerné sauf la page de saisie du code elle-même).
+- Une personne avec le code général (`ATYCASA_INVITE_CODE`) obtient
+  l'accès complet à l'appli, mais **jamais** à `admin.html`, même en
+  devinant ou en tapant directement cette URL.
+- Le cookie posé après un code valide dure 1 an sur cet appareil ;
+  passé ce délai, la personne devra ressaisir le code.
+- **Révocation** — deux niveaux, à bien distinguer :
+  - Changer `ATYCASA_INVITE_CODE` seul : bloque les *nouvelles*
+    tentatives avec l'ancien code, mais ne déconnecte **pas** les
+    personnes qui ont déjà un cookie valide (elles gardent l'accès
+    jusqu'à expiration du cookie, un an après leur première visite).
+  - Changer `ATYCASA_COOKIE_SECRET` : invalide **tous** les cookies
+    existants d'un coup, pour tout le monde y compris Dam's — tout le
+    monde devra ressaisir un code après ça. C'est le seul levier pour
+    "réinitialiser" tout le monde en même temps.
+  - Il n'existe pas aujourd'hui de moyen de révoquer une seule personne
+    invitée sans déconnecter tout le monde (conséquence du choix "un
+    seul code partagé" plutôt qu'un code par personne, décidé pour
+    aller plus vite — un code par personne resterait possible plus
+    tard si le besoin s'en fait sentir, ça demanderait un petit
+    stockage en plus, type Vercel Edge Config).
+
 ## Idées et souhaits
 
 *(Rien dans `notes.md` à digérer pour ce premier cycle.)*
@@ -87,6 +168,10 @@ maskable, npm audit) donnent un modèle direct à réappliquer ici.
 
 | Point | État |
 |---|---|
-| Compte / auth | Aucun — par choix produit (zéro friction). Atynote reste sans vrai compte (juste un prénom local). |
+| Compte / auth | Toujours aucun vrai compte (Atynote reste juste un prénom local). Remplacé pour l'accès global par un code d'invitation vérifié côté serveur (voir ci-dessus) — pas un compte, mais un vrai verrou. |
+| Verrou d'accès (middleware) | Code écrit et poussé, **inactif** tant que les 3 variables d'environnement ne sont pas configurées sur Vercel — action manuelle requise |
+| Branche | Verrou d'accès + admin.html sur `claude/atyroad-vehicle-selection-m10nrq`, pas encore mergés sur `main` |
+| Repo public | Toujours public — passage en privé manuel non fait (gratuit, sans impact Vercel) |
+| Hébergement réel | Vercel confirmé — CLAUDE.md à corriger (mentionne encore GitHub Pages) |
 | TWA / Play Store | Non commencé, à l'initiative de Dam's uniquement |
 | Widget Android natif | Discussion à reprendre plus tard (CLAUDE.md) |
