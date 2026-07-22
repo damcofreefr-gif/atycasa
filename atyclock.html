@@ -154,6 +154,24 @@
     }
     .btn-ghost-small:active { transform: scale(0.97); opacity: 1; }
 
+    .agenda-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+    }
+    .agenda-row-text { font-size: 13px; line-height: 1.4; }
+    .agenda-row-title { font-weight: 700; }
+    .agenda-row-hint { opacity: 0.6; font-size: 12px; margin-top: 2px; }
+    .switch {
+      position: relative; width: 48px; height: 28px; border-radius: 999px;
+      background: rgba(255,255,255,0.12); border: none; flex-shrink: 0;
+    }
+    .switch::after {
+      content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+      border-radius: 999px; background: #8a8f8c; transition: transform 0.2s, background 0.2s;
+    }
+    .switch.on { background: rgba(91,227,169,0.25); }
+    .switch.on::after { background: var(--accent); transform: translateX(20px); }
+
     @media (prefers-reduced-motion: reduce) {
       .offset-badge { transition: none; }
     }
@@ -199,6 +217,14 @@
     </div>
     <div class="cancel-row">
       <button class="btn-ghost-small hidden" id="btnCancel">Annuler le rappel</button>
+    </div>
+
+    <div class="agenda-row">
+      <div class="agenda-row-text">
+        <div class="agenda-row-title">🗓️ Rappel agenda du matin</div>
+        <div class="agenda-row-hint">Chaque jour à 8h, une notif pour jeter un œil à ton agenda.</div>
+      </div>
+      <button class="switch" id="agendaToggle" aria-label="Rappel agenda du matin"></button>
     </div>
   </div>
 

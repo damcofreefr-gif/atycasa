@@ -92,6 +92,24 @@ par des sessions chronométrées).
   rattrapage en rafale. La règle anti-dette du CLAUDE.md (voir Règles
   produit) s'applique aussi à Atyclock : un rappel manqué n'est jamais
   présenté comme un échec ou un retard.
+- Rappel agenda du matin : rappel quotidien spécial, auto-créé une
+  seule fois à 8h (`seedAgendaReminder`, `astate.agendaSeeded`) pour
+  inciter à consulter son agenda et repérer le jour ("🗓️ [jour] [date]
+  — un coup d'œil à ton agenda ?"). Repéré par un zoneId factice
+  (`AGENDA_ZONE_MARKER = "__agenda__"`) pour ne jamais entrer en
+  collision avec le rappel personnel "vierge" (sans zone) de
+  l'utilisateur sur atyclock.html. Désactivable via un interrupteur
+  dédié en bas d'atyclock.html (jamais recréé après désactivation
+  manuelle, contrairement au premier lancement). Exclu du calcul du
+  pulse sur le bouton 🕐 (sinon celui-ci pulserait en permanence pour
+  tout le monde et perdrait son sens de "tu as programmé quelque
+  chose"). Bouton "Ouvrir l'agenda" sur la bannière/notif : ouvre
+  Google Calendar (`CALENDAR_URL`, vue du jour) dans un nouvel onglet —
+  choix par défaut faute d'API web universelle pour lancer l'appli de
+  calendrier native du téléphone ; heure (8h) et lien sont volontairement
+  regroupés dans des constantes en tête de fichier pour être ajustés
+  facilement plus tard (ex : rendre l'heure configurable, ou pointer
+  vers un autre calendrier).
 
 ## Atygo (déblocage / démarrage d'action)
 - Bouton 🪄 dans l'en-tête d'Atycasa (à gauche du bouton 🕐). Rôle :

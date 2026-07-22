@@ -26,6 +26,16 @@
   const uid = () => Math.random().toString(36).slice(2, 9);
   const onAtyclockPage = !!$("btnProgram");
 
+  // Rappel agenda du matin : un rappel quotidien spécial, auto-créé une
+  // fois (jamais recréé si l'utilisateur le désactive ensuite), repéré
+  // par un zoneId factice pour ne jamais entrer en collision avec le
+  // rappel "vierge" personnel de l'utilisateur (celui sans zoneId, géré
+  // via getCurrentReminder() sur atyclock.html). Heure et lien calendrier
+  // fixes pour l'instant — prévu pour être ajustable plus tard.
+  const AGENDA_ZONE_MARKER = "__agenda__";
+  const AGENDA_HOUR = 8;
+  const CALENDAR_URL = "https://calendar.google.com/calendar/r/day";
+
   const params = new URLSearchParams(location.search);
   const ctxZoneId = params.get("zone");
   const ctxZoneName = params.get("name");
@@ -127,6 +137,23 @@
       hour12: false,
     }).format(date);
   }
+  function capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function frenchDayLabel(date) {
+    return capitalize(
+      new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(date)
+    );
+  }
+  function openCalendar() {
+    window.open(CALENDAR_URL, "_blank");
+  }
+  function nextDailyOccurrence(hour) {
+    const d = new Date();
+    d.setHours(hour, 0, 0, 0);
+    if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+    return d.getTime();
+  }
 
   // ---------- Persistance ----------
   function migrateLegacyKey() {
@@ -151,13 +178,14 @@
           // en attendant de vraies notifications push) ; migration douce
           // pour les états enregistrés avant l'ajout de ce champ.
           if (typeof d.soundEnabled !== "boolean") d.soundEnabled = false;
+          if (typeof d.agendaSeeded !== "boolean") d.agendaSeeded = false;
           return d;
         }
       }
     } catch (e) {
       console.error("Atyclock : chargement impossible", e);
     }
-    return { reminders: [], notifAsked: false, soundEnabled: false };
+    return { reminders: [], notifAsked: false, soundEnabled: false, agendaSeeded: false };
   }
   function saveAtyclockState() {
     try {
@@ -267,7 +295,11 @@
   function renderAtyclockPulse() {
     const btn = $("btnAtyclock");
     if (!btn) return;
-    btn.classList.toggle("pulse", astate.reminders.length > 0);
+    // Le rappel agenda du matin est actif par défaut pour tout le monde :
+    // l'exclure garde ce signal utile (au moins un vrai rappel personnel
+    // programmé) plutôt qu'un pulse permanent qui ne voudrait plus rien dire.
+    const hasPersonalReminder = astate.reminders.some((r) => r.zoneId !== AGENDA_ZONE_MARKER);
+    btn.classList.toggle("pulse", hasPersonalReminder);
   }
 
   // Même principe en miroir sur le bouton 🏡 (atyclock.html uniquement) :
@@ -320,6 +352,10 @@
     renderHousePulse();
   }
   function notifyDue(d, now) {
+    if (d.zoneId === AGENDA_ZONE_MARKER) {
+      notifyAgenda();
+      return;
+    }
     const late = now - d.originalTarget > CHECK_INTERVAL_MS * 2;
     let zoneName = d.zoneName;
     let zoneConfirmed = !!d.zoneId;
@@ -366,8 +402,72 @@
     }
   }
 
+  // ---------- Rappel agenda du matin ----------
+  function notifyAgenda() {
+    const text = `🗓️ ${frenchDayLabel(new Date())} — un coup d'œil à ton agenda ?`;
+    vibrate([80, 40, 80]);
+    showBanner(text, { label: "Ouvrir l'agenda", onClick: openCalendar }, false);
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        const n = new Notification("Atycasa", { body: text, icon: "icons/icon-192.png" });
+        n.onclick = () => {
+          window.focus();
+          openCalendar();
+          n.close();
+        };
+      } catch (e) {
+        // silencieux : certains contextes n'autorisent pas le constructeur Notification
+      }
+    }
+  }
+  function getAgendaReminder() {
+    return astate.reminders.find((r) => r.zoneId === AGENDA_ZONE_MARKER) || null;
+  }
+  // Auto-créé une seule fois, jamais recréé après une désactivation
+  // manuelle (agendaSeeded reste true) — respecte le choix de
+  // l'utilisateur plutôt que de le renvoyer sans arrêt.
+  function seedAgendaReminder() {
+    if (astate.agendaSeeded) return;
+    astate.agendaSeeded = true;
+    astate.reminders.push({
+      id: uid(),
+      targetTime: nextDailyOccurrence(AGENDA_HOUR),
+      isDaily: true,
+      zoneId: AGENDA_ZONE_MARKER,
+      zoneName: "Agenda",
+      createdAt: Date.now(),
+    });
+    saveAtyclockState();
+  }
+  function toggleAgendaReminder() {
+    const r = getAgendaReminder();
+    if (r) {
+      astate.reminders = astate.reminders.filter((x) => x !== r);
+    } else {
+      ensureNotifPermission();
+      astate.reminders.push({
+        id: uid(),
+        targetTime: nextDailyOccurrence(AGENDA_HOUR),
+        isDaily: true,
+        zoneId: AGENDA_ZONE_MARKER,
+        zoneName: "Agenda",
+        createdAt: Date.now(),
+      });
+    }
+    astate.agendaSeeded = true;
+    saveAtyclockState();
+    vibrate(20);
+    renderAgendaToggle();
+  }
+  function renderAgendaToggle() {
+    const el = $("agendaToggle");
+    if (!el) return;
+    el.classList.toggle("on", !!getAgendaReminder());
+  }
+
   // ---------- Init partagée (toutes les pages) ----------
   injectBannerStyle();
+  seedAgendaReminder();
   checkReminders();
   setInterval(checkReminders, CHECK_INTERVAL_MS);
 
@@ -632,6 +732,7 @@
   renderNow();
   renderTarget();
   renderSoundToggle();
+  renderAgendaToggle();
   setInterval(() => {
     renderNow();
     renderTarget();
@@ -642,6 +743,7 @@
   $("btnPlus60").onclick = () => addOffset(60);
   $("btnCancel").onclick = cancelReminder;
   $("btnBack").onclick = () => { location.href = "index.html"; };
+  $("agendaToggle").onclick = toggleAgendaReminder;
   bindProgramButton();
   bindStatusRow();
   bindSoundButton();
