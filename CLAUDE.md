@@ -7,6 +7,22 @@ L'app affiche un plan de maison en pixel-art ; chaque zone a une "fraîcheur"
 qui se dégrade avec le temps (métaphore : une fleur qui fane, qu'on arrose
 par des sessions chronométrées).
 
+## Règles de collaboration Claude
+Commun aux 4 applis Zéphyr Apps (Atycasa, Atyroad, Atyread, Sanpévé) —
+voir la section identique dans leurs CLAUDE.md respectifs.
+- Autocommit : après chaque tâche terminée, `git add` + commit (message
+  descriptif) + push sur la branche courante, sans demander confirmation
+  au préalable — sauf action réellement destructive (suppression de
+  code, force-push, `reset --hard`...) ou mention contraire explicite
+  de l'utilisateur pour une modification donnée.
+- Ne jamais supprimer de code sans confirmation explicite.
+- Git : commandes séparées (jamais `&&`) en session locale PowerShell ;
+  pas de contrainte particulière en session Claude Code Remote (bash).
+- Continuité entre sessions : voir `topos_sessions/` (README.md explique
+  le système, `notes.md` pour noter au fil de l'eau une idée à digérer
+  au prochain topo, `LATEST.md` = état le plus récent, régénéré tous
+  les 15 jours par une Routine Claude Code commune aux 4 applis).
+
 ## Règles produit NON NÉGOCIABLES
 - Fraîcheur qui se dégrade, jamais de dette qui s'accumule. On n'affiche
   jamais de retard, de streak cassé, ou de temps "dû". Une zone a "soif",
@@ -371,14 +387,30 @@ par des sessions chronométrées).
   froid contredit le ton "chaleureux, jamais culpabilisant" — d'où un
   anthracite à undertone chaud plutôt qu'un vrai mode clair.
 
+## Accès / verrou (admin.html, invite.html, middleware.js)
+Verrou d'accès réel via Edge Middleware Vercel (`middleware.js`,
+exécuté côté serveur avant que la moindre page ne soit servie — jamais
+visible ni contournable depuis les devtools, contrairement à un
+contrôle en JS client). Deux codes distincts (variables d'environnement
+Vercel) : `ATYCASA_INVITE_CODE` (accès à l'app) et `ATYCASA_ADMIN_CODE`
+(accès à tout, y compris `/admin.html`) ; `ATYCASA_COOKIE_SECRET` signe
+le cookie `atycasa_access` (1 an). Fail-open tant que ces variables ne
+sont pas configurées sur Vercel — voir `topos_sessions/` pour la
+checklist de mise en service. `admin.html` héberge le suivi
+chronologique (lien vers `topos_sessions/LATEST.md`).
+
 ## Workflow
 - Test local : npx http-server -p 8080 (le service worker exige un
   serveur, pas de file://). URL de test : http://localhost:8080
-- Déploiement : commit + push sur main → GitHub Pages.
+- Déploiement : Vercel (nécessaire pour l'Edge Middleware ci-dessus,
+  GitHub Pages ne peut pas l'exécuter) — push sur main déclenche le
+  déploiement.
 - Après modification de sw.js ou des assets : incrémenter la constante
   CACHE dans sw.js (ex : "maison-v2").
 - Avant chaque commit : node --check app.js + tester le parcours complet
   (créer zone → peindre → GO → timer → fin de session).
+- Voir aussi la section "Règles de collaboration Claude" ci-dessus
+  (autocommit, topos_sessions/).
 
 ## Pièges connus
 - Ne jamais casser la compatibilité du localStorage existant : si le
