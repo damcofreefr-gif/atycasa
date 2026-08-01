@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#16130F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Boost · Atycasa</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg1: #16130F;
+      --bg2: #221C15;
+      --surface: rgba(255,255,255,0.05);
+      --surface2: #241E17;
+      --text: #EAF4F0;
+      --accent: #5BE3A9;
+      --accent-dark: #16130F;
+      --border: rgba(255,255,255,0.12);
+    }
+    * {
+      box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
+      -ms-user-select: none; user-select: none;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
+    body {
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+      padding: max(14px, env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    textarea, input { font-family: inherit; user-select: text; -webkit-user-select: text; }
+    .hidden { display: none !important; }
+
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .back-btn { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 10px; padding: 8px 12px; font-size: 16px; }
+    .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+
+    .card {
+      background: var(--surface2); border-radius: 20px; padding: 18px 20px;
+      width: 100%; max-width: 420px; margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    #screenHome, #screenFlowA, #screenFlowB, #screenFlowC, #screenActive, #screenRunning {
+      display: flex; flex-direction: column; flex: 1; min-height: 0;
+    }
+
+    /* ---------- Accueil / graphique hebdo ---------- */
+    .week-title { font-size: 13px; opacity: 0.6; text-align: center; margin-bottom: 14px; }
+    .week-chart { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; height: 110px; }
+    .week-day { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+    .week-bar-slot { flex: 1; display: flex; align-items: flex-end; width: 100%; justify-content: center; }
+    .week-bar { width: 60%; min-width: 14px; border-radius: 6px 6px 3px 3px; background: var(--accent); opacity: 0.85; transition: height 0.3s ease; }
+    .week-day-label { font-size: 11px; opacity: 0.5; margin-top: 6px; }
+    .week-total { text-align: center; font-size: 15px; font-weight: 700; margin-top: 16px; }
+    .home-spacer { flex: 1; min-height: 16px; }
+    .btn-primary {
+      width: 100%; min-height: 56px; padding: 14px; border-radius: 16px; border: none;
+      background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 17px;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+
+    /* ---------- Flow guidé ---------- */
+    .flow-question { font-size: 20px; font-weight: 800; text-align: center; margin-top: 18px; line-height: 1.3; }
+    .flow-sub { font-size: 13px; opacity: 0.6; text-align: center; margin-top: 8px; }
+    .flow-input {
+      width: 100%; margin-top: 22px; padding: 14px; border-radius: 14px;
+      border: 1px solid var(--border); background: var(--bg1); color: var(--text);
+      font-size: 16px; resize: none; min-height: 70px;
+    }
+    .flow-spacer { flex: 1; min-height: 16px; }
+    .flow-actions { display: flex; flex-direction: column; gap: 8px; }
+    .btn-ghost-small {
+      width: 100%; min-height: 42px; padding: 10px 16px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2); background: transparent;
+      color: var(--text); font-size: 14px; font-weight: 600; opacity: 0.85;
+    }
+    .btn-ghost-small:active { transform: scale(0.97); opacity: 1; }
+    .btn-subtle {
+      background: transparent; border: none; color: var(--text); opacity: 0.45;
+      font-size: 12px; padding: 8px; text-align: center;
+    }
+    .recap-card { background: var(--surface); border-radius: 14px; padding: 14px 16px; margin-top: 18px; }
+    .recap-row { font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
+    .recap-row:last-child { margin-bottom: 0; }
+    .recap-label { opacity: 0.55; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
+
+    /* ---------- Écran actif (défini, non démarré) ---------- */
+    .active-title { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.55; text-align: center; margin-top: 10px; }
+    .active-priority { font-size: 20px; font-weight: 800; text-align: center; margin-top: 10px; line-height: 1.3; }
+    .active-action { font-size: 14px; opacity: 0.75; text-align: center; margin-top: 10px; line-height: 1.4; }
+    .encouragement { font-size: 13px; opacity: 0.7; text-align: center; font-style: italic; margin-top: 14px; min-height: 18px; }
+    .reminder-picker { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+    .reminder-pill {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; opacity: 0.7;
+    }
+    .reminder-pill.on { border-color: var(--accent); color: var(--accent); opacity: 1; background: rgba(91,227,169,0.1); }
+    .active-spacer { flex: 1; min-height: 16px; }
+    .btn-start {
+      width: 100%; min-height: 64px; padding: 14px; border-radius: 16px; border: none;
+      background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 18px;
+    }
+    .btn-start:active { transform: scale(0.98); }
+
+    /* ---------- Écran en cours ---------- */
+    .timer-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.5; text-align: center; margin-top: 16px; }
+    .timer-clock { font-size: 56px; font-weight: 800; text-align: center; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .timer-clock.paused { opacity: 0.5; }
+    .timer-action { font-size: 14px; opacity: 0.75; text-align: center; margin-top: 10px; line-height: 1.4; }
+    .timer-spacer { flex: 1; min-height: 16px; }
+    .btn-finish {
+      width: 100%; min-height: 64px; padding: 14px; border-radius: 16px; border: none;
+      background: var(--accent); color: var(--accent-dark); font-weight: 800; font-size: 18px;
+    }
+    .btn-finish:active { transform: scale(0.98); }
+    .btn-pause {
+      width: 100%; min-height: 46px; padding: 10px; border-radius: 14px; margin-top: 10px;
+      border: 1px solid rgba(255,255,255,0.2); background: transparent; color: var(--text);
+      font-weight: 600; font-size: 14px; opacity: 0.85;
+    }
+
+    /* ---------- Modale (retour après absence) ---------- */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50;
+    }
+    .modal-card {
+      background: var(--surface2); border-radius: 20px; padding: 22px;
+      max-width: 380px; width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .modal-title { font-weight: 800; font-size: 17px; margin-bottom: 10px; }
+    .modal-body { font-size: 14px; line-height: 1.6; opacity: 0.9; margin-bottom: 16px; }
+    .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+    .modal-adjust { display: none; gap: 8px; margin-top: 10px; align-items: center; }
+    .modal-adjust.show { display: flex; }
+    .modal-adjust input {
+      flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg1); color: var(--text); font-size: 15px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡</button>
+    <div class="h-title">⚡ Boost</div>
+  </div>
+
+  <div class="card">
+
+    <!-- Accueil : graphique hebdo + démarrer un nouveau boost -->
+    <div id="screenHome" class="hidden">
+      <div class="week-title">Cette semaine</div>
+      <div class="week-chart" id="weekChart"></div>
+      <div class="week-total" id="weekTotal"></div>
+      <div class="home-spacer"></div>
+      <button class="btn-primary" id="btnNewBoost">🆕 Nouveau boost</button>
+    </div>
+
+    <!-- Flow — écran 1 -->
+    <div id="screenFlowA" class="hidden">
+      <div class="flow-question">Qu'est-ce qui compte le plus, là ?</div>
+      <textarea class="flow-input" id="inputPriority" maxlength="120" placeholder="En quelques mots..."></textarea>
+      <div class="flow-spacer"></div>
+      <div class="flow-actions">
+        <button class="btn-primary" id="btnFlowANext">Suivant</button>
+        <button class="btn-subtle" id="btnFlowACancel">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Flow — écran 2 -->
+    <div id="screenFlowB" class="hidden">
+      <div class="flow-question">Quelle toute première action pour démarrer ?</div>
+      <div class="flow-sub">La plus petite possible.</div>
+      <textarea class="flow-input" id="inputFirstAction" maxlength="120" placeholder="En quelques mots..."></textarea>
+      <div class="flow-spacer"></div>
+      <div class="flow-actions">
+        <button class="btn-primary" id="btnFlowBNext">Suivant</button>
+        <button class="btn-ghost-small" id="btnFlowBBack">Retour</button>
+        <button class="btn-subtle" id="btnFlowBCancel">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Flow — écran 3 : récap -->
+    <div id="screenFlowC" class="hidden">
+      <div class="flow-question">C'est prêt.</div>
+      <div class="recap-card">
+        <div class="recap-row"><span class="recap-label">Ce qui compte</span><span id="recapPriority"></span></div>
+        <div class="recap-row"><span class="recap-label">Première action</span><span id="recapFirstAction"></span></div>
+      </div>
+      <div class="flow-spacer"></div>
+      <div class="flow-actions">
+        <button class="btn-primary" id="btnFlowCConfirm">⚡ Booster</button>
+        <button class="btn-ghost-small" id="btnFlowCBack">Retour</button>
+        <button class="btn-subtle" id="btnFlowCCancel">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Boost actif, pas encore démarré -->
+    <div id="screenActive" class="hidden">
+      <div class="active-title">Ce qui compte</div>
+      <div class="active-priority" id="activePriority"></div>
+      <div class="active-title">Première action</div>
+      <div class="active-action" id="activeFirstAction"></div>
+      <div class="encouragement" id="activeEncouragement"></div>
+      <div class="reminder-picker">
+        <button class="reminder-pill" data-min="15" id="pill15">15 min</button>
+        <button class="reminder-pill" data-min="30" id="pill30">30 min</button>
+        <button class="reminder-pill" data-min="60" id="pill60">60 min</button>
+      </div>
+      <div class="active-spacer"></div>
+      <button class="btn-start" id="btnStart">▶ Je l'ai démarré</button>
+      <button class="btn-ghost-small" id="btnEdit" style="margin-top:10px;">Modifier</button>
+      <button class="btn-subtle" id="btnAbandon">Abandonner ce boost</button>
+    </div>
+
+    <!-- Boost en cours -->
+    <div id="screenRunning" class="hidden">
+      <div class="timer-label">En cours</div>
+      <div class="timer-clock" id="timerClock">00:00</div>
+      <div class="timer-action" id="runningFirstAction"></div>
+      <div class="encouragement" id="runningEncouragement"></div>
+      <div class="timer-spacer"></div>
+      <button class="btn-finish" id="btnFinish">✅ Je l'ai terminé</button>
+      <button class="btn-pause" id="btnPause">⏸ Pause</button>
+    </div>
+
+  </div>
+
+  <div class="modal-overlay hidden" id="returnOverlay">
+    <div class="modal-card">
+      <div class="modal-title">Tu es toujours dessus ?</div>
+      <div class="modal-body" id="returnBody"></div>
+      <div class="modal-actions">
+        <button class="btn-ghost-small" id="btnReturnAll">Oui, tout ce temps</button>
+        <button class="btn-ghost-small" id="btnReturnAdjust">Une partie seulement</button>
+        <button class="btn-ghost-small" id="btnReturnStopped">Non, remets en pause</button>
+      </div>
+      <div class="modal-adjust" id="returnAdjustRow">
+        <input type="number" id="returnAdjustInput" min="0" inputmode="numeric"> <span>min</span>
+        <button class="btn-ghost-small" id="btnReturnAdjustConfirm">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="boost.js"></script>
+</body>
+</html>

@@ -259,6 +259,96 @@ par des sessions chronométrées).
   protection raisonnable pour un bloc-note familial, pas un vrai
   chiffrement — à garder en tête si le dépôt GitHub est public.
 
+## Boost (priorité du moment + relance douce jusqu'au démarrage)
+- Bouton ⚡ dans l'en-tête d'Atycasa (à côté du 🕐). Rôle : poser UNE
+  priorité du moment + sa toute première action pour démarrer, puis
+  se faire relancer gentiment jusqu'à s'y mettre, avec chronométrage
+  de la session une fois lancée. Un seul boost actif à la fois.
+- Fichiers boost.html + boost.js (mêmes contraintes vanilla que le
+  reste). boost.js tourne sur index.html (juste pour que les rappels
+  continuent d'être vérifiés en arrière-plan + la pastille du bouton
+  ⚡) et sur boost.html (interface complète).
+- Règles produit :
+  - Un seul boost actif à la fois — il faut terminer ou abandonner
+    le précédent pour en définir un nouveau.
+  - Modifiable ("Modifier", repasse par le flow pré-rempli) et
+    abandonnable ("Abandonner ce boost") sans confirmation
+    dramatique — retire juste le boost, retour direct à l'accueil.
+  - Démarrer est déjà une victoire : célébré par un encouragement
+    ("C'est parti, un pas à la fois 🌱"), jamais traité comme un
+    simple changement d'état technique.
+  - Graphique hebdo jamais accusateur : un jour à 0 minute affiche
+    une colonne vide et neutre, jamais une barre rouge ni "0 min"
+    écrit en reproche. Total toujours formulé positivement ("Xh Y
+    boostées cette semaine 🌱", ou une invitation neutre si la
+    semaine est encore vierge).
+  - Après 3 rappels sans réaction, veille automatique avec un
+    message doux ("Je me fais discret — reviens quand tu veux, le
+    boost t'attend") : plus aucun rappel tant que la page Boost n'a
+    pas été rouverte (qui réarme automatiquement `dormant`/
+    `remindCount`) — cohérent avec la règle anti-dette du projet, un
+    boost ignoré n'est jamais présenté comme un échec.
+- Flow de définition : 3 écrans maximum — "Qu'est-ce qui compte le
+  plus, là ?" (texte libre court) → "Quelle toute première action
+  pour démarrer ?" (texte libre court, la plus petite possible) →
+  récap + "⚡ Booster". Retour/Annuler possibles à chaque écran, rien
+  n'est persisté en localStorage avant la confirmation finale (état
+  en mémoire `draft`, perdu sans conséquence si on annule).
+- Rappels (tant que le boost est actif et non démarré) : toutes les
+  `reminderIntervalMin` minutes (15/30/60, choix via 3 pastilles sur
+  l'écran actif, réglage global). Vibration + bannière (même
+  mécanique que les autres bannières de l'app : `showBoostBanner`) +
+  notification via `ServiceWorkerRegistration.showNotification` avec
+  actions "▶ Je l'ai démarré" / "✅ Je l'ai terminé" — les actions ne
+  sont supportées que par les notifications déclenchées via le
+  service worker, pas par le constructeur `Notification()` classique
+  utilisé ailleurs dans l'app (Atyclock, Atygo), d'où ce chemin dédié
+  ici. Clics d'action gérés dans `sw.js` (`notificationclick`) : si
+  un onglet boost.html est déjà ouvert, l'action lui est transmise
+  par `postMessage` (appliquée sans recharger) ; sinon il est ouvert
+  avec l'action en paramètre d'URL (`boost.html?action=start`),
+  relu et appliqué par boost.js au chargement puis nettoyé de l'URL.
+  Permission de notification réutilisée (état global du navigateur,
+  partagé avec Atyclock) : jamais redemandée si déjà refusée, mode
+  bannière seul dans ce cas.
+- Chronométrage : "▶ Je l'ai démarré" lance le minuteur (état
+  `started`, `startedAt`), pause/reprise possibles (`accumulatedMs`
+  cumule les segments entre les pauses). "✅ Je l'ai terminé" fige la
+  durée (minimum 1 minute comptée, jamais 0, cohérent avec "toute
+  session compte") et l'enregistre dans `sessions`.
+  App fermée pendant une session en cours : un battement de vie
+  (`lastSeenAt`, rafraîchi toutes les 20s tant que la page est au
+  premier plan) permet de détecter un écart de plus de 3 minutes à
+  la réouverture, et déclenche la question "Tu es toujours dessus ?"
+  avec 3 issues possibles — jamais un temps gonflé silencieusement :
+  "Oui, tout ce temps" (rien ne change, le calcul inclut déjà
+  l'écart), "Une partie seulement" (ajustement manuel du nombre de
+  minutes à compter pour l'écart, champ pré-rempli avec l'écart réel
+  mais librement modifiable), ou "Non, remets en pause" (l'écart est
+  exclu, seul le temps confirmé avant le dernier signe de vie compte).
+- Encouragements : pools de messages courts et chaleureux pour trois
+  moments (démarrage, fin de session, retour après une absence sur
+  la page), jamais culpabilisants, jamais de comparaison avec les
+  jours précédents. Rotation aléatoire avec évitement de la
+  répétition immédiate (`pickEncouragement`).
+- Graphique hebdo (sur boost.html, écran d'accueil) : fenêtre
+  glissante des 7 derniers jours (pas une semaine calendaire figée),
+  barres en CSS pur (aucune librairie), hauteur proportionnelle au
+  jour le plus chargé de la fenêtre. Jours à 0 minute : pas de barre
+  du tout (colonne vide), voir règles produit ci-dessus.
+- Données : localStorage clé "boost-v1", {boosts: [{id, priority,
+  firstAction, createdAt, status: 'active'|'started'|'done', startedAt,
+  accumulatedMs, paused, pausedAt, remindCount, dormant,
+  lastReminderAt, lastSeenAt, finishedAt, minutes}], sessions:
+  [{date, minutes, boostId}], reminderIntervalMin, notifAsked}. Les
+  boosts abandonnés ne sont pas conservés (retirés du tableau).
+- Phase 2 (après feu vert + mise en place Supabase) : remplacer le
+  déclenchement par vérification périodique (fonctionne seulement
+  app ouverte/arrière-plan proche) par un vrai push serveur — Supabase
+  Edge Functions + Web Push, abonnements push stockés par compte
+  utilisateur — pour que les rappels arrivent même app fermée depuis
+  longtemps. Spécification détaillée à faire à ce moment-là.
+
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
   Déploiement = push des fichiers statiques tels quels sur GitHub Pages.

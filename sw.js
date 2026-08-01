@@ -2,7 +2,7 @@
    Avantage : chaque push sur GitHub met l'app à jour dès la prochaine
    ouverture avec connexion, et l'app reste utilisable hors ligne. */
 
-const CACHE = "maison-v56";
+const CACHE = "maison-v57";
 const ASSETS = [
   "./",
   "./index.html",
@@ -13,6 +13,8 @@ const ASSETS = [
   "./atygo.js",
   "./atynote.html",
   "./atynote.js",
+  "./boost.html",
+  "./boost.js",
   "./firebase-config.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
@@ -43,5 +45,28 @@ self.addEventListener("fetch", (e) => {
         return res;
       })
       .catch(() => caches.match(e.request))
+  );
+});
+
+// Boost : actions "▶ Je l'ai démarré" / "✅ Je l'ai terminé" sur la
+// notification de rappel. Si un onglet boost.html est déjà ouvert, on
+// lui passe l'action par message (elle applique le changement sans
+// recharger) ; sinon on l'ouvre avec l'action en paramètre d'URL,
+// lue au chargement par boost.js.
+self.addEventListener("notificationclick", (e) => {
+  const action = e.action || "";
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if (client.url.indexOf("boost.html") !== -1 && "focus" in client) {
+          if (action) client.postMessage({ type: "boost-action", action });
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow("boost.html" + (action ? "?action=" + action : ""));
+      }
+    })
   );
 });
