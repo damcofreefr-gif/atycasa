@@ -387,10 +387,24 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   froid contredit le ton "chaleureux, jamais culpabilisant" — d'où un
   anthracite à undertone chaud plutôt qu'un vrai mode clair.
 
+## Accès / verrou (admin.html, invite.html, middleware.js)
+Verrou d'accès réel via Edge Middleware Vercel (`middleware.js`,
+exécuté côté serveur avant que la moindre page ne soit servie — jamais
+visible ni contournable depuis les devtools, contrairement à un
+contrôle en JS client). Deux codes distincts (variables d'environnement
+Vercel) : `ATYCASA_INVITE_CODE` (accès à l'app) et `ATYCASA_ADMIN_CODE`
+(accès à tout, y compris `/admin.html`) ; `ATYCASA_COOKIE_SECRET` signe
+le cookie `atycasa_access` (1 an). Fail-open tant que ces variables ne
+sont pas configurées sur Vercel — voir `topos_sessions/` pour la
+checklist de mise en service. `admin.html` héberge le suivi
+chronologique (lien vers `topos_sessions/LATEST.md`).
+
 ## Workflow
 - Test local : npx http-server -p 8080 (le service worker exige un
   serveur, pas de file://). URL de test : http://localhost:8080
-- Déploiement : commit + push sur main → GitHub Pages.
+- Déploiement : Vercel (nécessaire pour l'Edge Middleware ci-dessus,
+  GitHub Pages ne peut pas l'exécuter) — push sur main déclenche le
+  déploiement.
 - Après modification de sw.js ou des assets : incrémenter la constante
   CACHE dans sw.js (ex : "maison-v2").
 - Avant chaque commit : node --check app.js + tester le parcours complet
