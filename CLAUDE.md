@@ -7,6 +7,22 @@ L'app affiche un plan de maison en pixel-art ; chaque zone a une "fraîcheur"
 qui se dégrade avec le temps (métaphore : une fleur qui fane, qu'on arrose
 par des sessions chronométrées).
 
+## Règles de collaboration Claude
+Commun aux 4 applis Zéphyr Apps (Atycasa, Atyroad, Atyread, Sanpévé) —
+voir la section identique dans leurs CLAUDE.md respectifs.
+- Autocommit : après chaque tâche terminée, `git add` + commit (message
+  descriptif) + push sur la branche courante, sans demander confirmation
+  au préalable — sauf action réellement destructive (suppression de
+  code, force-push, `reset --hard`...) ou mention contraire explicite
+  de l'utilisateur pour une modification donnée.
+- Ne jamais supprimer de code sans confirmation explicite.
+- Git : commandes séparées (jamais `&&`) en session locale PowerShell ;
+  pas de contrainte particulière en session Claude Code Remote (bash).
+- Continuité entre sessions : voir `topos_sessions/` (README.md explique
+  le système, `notes.md` pour noter au fil de l'eau une idée à digérer
+  au prochain topo, `LATEST.md` = état le plus récent, régénéré tous
+  les 15 jours par une Routine Claude Code commune aux 4 applis).
+
 ## Règles produit NON NÉGOCIABLES
 - Fraîcheur qui se dégrade, jamais de dette qui s'accumule. On n'affiche
   jamais de retard, de streak cassé, ou de temps "dû". Une zone a "soif",
@@ -379,6 +395,8 @@ par des sessions chronométrées).
   CACHE dans sw.js (ex : "maison-v2").
 - Avant chaque commit : node --check app.js + tester le parcours complet
   (créer zone → peindre → GO → timer → fin de session).
+- Voir aussi la section "Règles de collaboration Claude" ci-dessus
+  (autocommit, topos_sessions/).
 
 ## Pièges connus
 - Ne jamais casser la compatibilité du localStorage existant : si le
