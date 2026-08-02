@@ -2,7 +2,10 @@
    Atymemo — aide-mémoire logistique du quotidien : repères à
    consulter (numéros utiles, durées légales, liens officiels),
    jamais une action à cocher. Indépendant d'Atycasa/Atyclock/Atygo
-   (aucun lien de données), page autonome uniquement.
+   (aucun lien de données), sauf pour le rappel "1h avant les heures
+   creuses" qui a besoin de tourner en arrière-plan : ce script est
+   donc aussi chargé (léger) sur index.html, l'interface complète ne
+   s'active que sur atymemo.html.
    Deux sections personnalisables (propres à chaque foyer, aucune
    valeur générique fiable n'existant) : heures creuses (plages +
    graphique 24h + photo de référence) et jours de collecte.
@@ -11,18 +14,30 @@
 (function () {
   const STORAGE_KEY = "atymemo-v1";
   const $ = (id) => document.getElementById(id);
+  const onMemoPage = !!$("hcRanges");
+  const CHECK_INTERVAL_MS = 60000;
+  const REMINDER_LEAD_MS = 60 * 60000; // rappel 1h avant le début de la plage
 
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const d = JSON.parse(raw);
-        if (d && d.heuresCreuses && Array.isArray(d.heuresCreuses.ranges)) return d;
+        if (d && d.heuresCreuses && Array.isArray(d.heuresCreuses.ranges)) {
+          if (typeof d.notifHc !== "boolean") d.notifHc = false;
+          if (typeof d.notifAsked !== "boolean") d.notifAsked = false;
+          return d;
+        }
       }
     } catch (e) {
       console.error("Atymemo : chargement impossible", e);
     }
-    return { heuresCreuses: { ranges: [{ start: "22:00", end: "06:00" }], photoDataUrl: null }, collecte: "" };
+    return {
+      heuresCreuses: { ranges: [{ start: "22:00", end: "06:00" }], photoDataUrl: null },
+      collecte: "",
+      notifHc: false,
+      notifAsked: false,
+    };
   }
   let mstate = load();
   function save() {
@@ -32,6 +47,106 @@
       console.error("Atymemo : sauvegarde impossible (photo trop lourde ?)", e);
     }
   }
+
+  // ---------- Bannière (toutes les pages) ----------
+  function injectBannerStyle() {
+    if ($("atymemoBannerStyle")) return;
+    const style = document.createElement("style");
+    style.id = "atymemoBannerStyle";
+    style.textContent =
+      ".atymemo-banner{position:fixed;left:14px;right:14px;top:max(14px,env(safe-area-inset-top));" +
+      "z-index:200;background:var(--surface2,#241E17);border:1px solid var(--accent,#5BE3A9);" +
+      "border-radius:14px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" +
+      "display:flex;align-items:center;gap:10px;transform:translateY(-140%);" +
+      "transition:transform 0.3s ease;font-family:'Avenir Next','Segoe UI',system-ui,sans-serif;}" +
+      ".atymemo-banner.show{transform:translateY(0);}" +
+      ".atymemo-banner .txt{flex:1;font-size:14px;line-height:1.4;color:var(--text,#EAF4F0);}" +
+      ".atymemo-banner button{background:transparent;border:none;color:var(--accent,#5BE3A9);" +
+      "font-weight:700;font-size:13px;padding:6px;cursor:pointer;}" +
+      "@media (prefers-reduced-motion: reduce){.atymemo-banner{transition:none;}}";
+    document.head.appendChild(style);
+  }
+  let bannerTimer = null;
+  function showAtymemoBanner(text) {
+    let el = $("atymemoBanner");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "atymemoBanner";
+      el.className = "atymemo-banner";
+      el.innerHTML = '<div class="txt"></div><button type="button">OK</button>';
+      el.querySelector("button").onclick = () => el.classList.remove("show");
+      document.body.appendChild(el);
+    }
+    el.querySelector(".txt").textContent = text;
+    el.classList.add("show");
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => el.classList.remove("show"), 8000);
+  }
+
+  // ---------- Rappel 1h avant les heures creuses (toutes les pages) ----------
+  function ensureNotifPermission() {
+    if (!("Notification" in window)) return;
+    if (mstate.notifAsked) return;
+    mstate.notifAsked = true;
+    save();
+    if (Notification.permission === "default") {
+      try {
+        Notification.requestPermission();
+      } catch (e) {
+        // silencieux
+      }
+    }
+  }
+  function dayKeyFor(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  function nextRangeStart(range, now) {
+    const [h, m] = range.start.split(":").map(Number);
+    const d = new Date(now);
+    d.setHours(h, m, 0, 0);
+    if (d.getTime() <= now) d.setDate(d.getDate() + 1);
+    return d.getTime();
+  }
+  function notifyHcRappel(range) {
+    const text = `🧺 Heures creuses dans 1h (${range.start}) — de quoi lancer une machine ?`;
+    if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    showAtymemoBanner(text);
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification("Atycasa · Atymemo", { body: text, icon: "icons/icon-192.png" });
+      } catch (e) {
+        // silencieux : certains contextes n'autorisent pas le constructeur Notification
+      }
+    }
+  }
+  // Une seule notif par plage et par occurrence (lastReminderDayKey stocke
+  // le jour de l'occurrence déjà notifiée) — se réarme tout seul le
+  // lendemain puisque le dayKey change.
+  function checkHcReminders() {
+    if (!mstate.notifHc) return;
+    const now = Date.now();
+    let dirty = false;
+    mstate.heuresCreuses.ranges.forEach((r) => {
+      if (!r.start) return;
+      const startTs = nextRangeStart(r, now);
+      if (startTs - now > REMINDER_LEAD_MS) return;
+      const occurrenceKey = dayKeyFor(startTs);
+      if (r.lastReminderDayKey === occurrenceKey) return;
+      r.lastReminderDayKey = occurrenceKey;
+      dirty = true;
+      notifyHcRappel(r);
+    });
+    if (dirty) save();
+  }
+
+  // ---------- Init partagée (toutes les pages) ----------
+  injectBannerStyle();
+  checkHcReminders();
+  setInterval(checkHcReminders, CHECK_INTERVAL_MS);
+
+  // ---------- Interface (atymemo.html uniquement) ----------
+  if (!onMemoPage) return;
 
   // ---------- Sections repliables ----------
   document.querySelectorAll(".memo-section-header").forEach((btn) => {
@@ -250,9 +365,20 @@
     $("collecteInput").value = mstate.collecte || "";
   }
 
+  // ---------- Rappel 1h avant : interrupteur ----------
+  function renderNotifToggle() {
+    $("hcNotifToggle").classList.toggle("on", !!mstate.notifHc);
+  }
+
   // ---------- Liaison ----------
   $("btnBack").onclick = () => { location.href = "index.html"; };
   $("btnHcAdd").onclick = addRange;
+  $("hcNotifToggle").onclick = () => {
+    mstate.notifHc = !mstate.notifHc;
+    if (mstate.notifHc) ensureNotifPermission();
+    save();
+    renderNotifToggle();
+  };
   $("btnHcPhoto").onclick = () => $("hcPhotoInput").click();
   $("hcPhotoInput").onchange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -282,4 +408,5 @@
   renderBar();
   renderPhoto();
   renderCollecte();
+  renderNotifToggle();
 })();

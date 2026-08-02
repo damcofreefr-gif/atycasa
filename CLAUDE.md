@@ -369,12 +369,12 @@ voir la section identique dans leurs CLAUDE.md respectifs.
 - Bouton 🧭 dans l'en-tête d'Atycasa (à droite du bouton 📝). Rôle :
   repères pratiques du quotidien à consulter (numéros utiles, durées
   légales, liens officiels) — jamais une action à cocher, contrairement
-  à Atygo. Page autonome, aucun lien de données avec le reste de l'app.
-  Simple lien `<a href="atymemo.html">` dans l'en-tête (pas de script
-  chargé sur index.html : ni pastille, ni logique en arrière-plan
-  nécessaire pour cette page).
+  à Atygo. Page autonome, aucun lien de données avec le reste de l'app
+  — seule exception : atymemo.js tourne aussi (léger) sur index.html
+  pour que le rappel "1h avant les heures creuses" continue de
+  fonctionner en arrière-plan, même hors de la page Atymemo.
 - Fichiers atymemo.html + atymemo.js (mêmes contraintes vanilla que
-  le reste), chargés uniquement sur atymemo.html.
+  le reste), interface complète sur atymemo.html uniquement.
 - Sections repliables (`.memo-section`, ouverture/fermeture au tap
   sur l'en-tête) : heures creuses ouverte par défaut (la plus
   utile/personnalisée), les autres repliées pour ne pas noyer la
@@ -423,8 +423,21 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   - Jours de collecte des poubelles/tri : simple champ texte libre
     (les formats de collecte varient trop d'une commune à l'autre
     pour être structurés utilement).
+- Rappel "1h avant les heures creuses" (interrupteur "🔔 Me prévenir
+  1h avant", désactivé par défaut) : pour chaque plage configurée,
+  notification + bannière quand il reste moins d'1h avant son
+  démarrage ("🧺 Heures creuses dans 1h (22:00) — de quoi lancer une
+  machine ?"). Une seule fois par plage et par occurrence
+  (`lastReminderDayKey` sur la plage, comparé au jour de l'occurrence
+  à venir) — se réarme tout seul le lendemain. Permission de
+  notification demandée uniquement à l'activation de l'interrupteur
+  (vrai geste utilisateur), jamais redemandée si refusée — même
+  logique qu'Atyclock/Atygo/Boost, mais état propre à Atymemo (pas de
+  donnée partagée). Vérifié toutes les 60s (`checkHcReminders`),
+  suffisant pour une fenêtre d'1h.
 - Données : localStorage clé "atymemo-v1", {heuresCreuses: {ranges:
-  [{start, end}], photoDataUrl}, collecte}.
+  [{start, end, lastReminderDayKey}], photoDataUrl}, collecte,
+  notifHc, notifAsked}.
 
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
