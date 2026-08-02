@@ -18,6 +18,9 @@ voir la section identique dans leurs CLAUDE.md respectifs.
 - Ne jamais supprimer de code sans confirmation explicite.
 - Git : commandes séparées (jamais `&&`) en session locale PowerShell ;
   pas de contrainte particulière en session Claude Code Remote (bash).
+- Conclusion de tâche toujours en français : le résumé de fin de tâche
+  (ce qui a été fait, la suite éventuelle) est rédigé en français, même
+  si des échanges intermédiaires ou du code ont été en anglais.
 - Continuité entre sessions : voir `topos_sessions/` (README.md explique
   le système, `notes.md` pour noter au fil de l'eau une idée à digérer
   au prochain topo, `LATEST.md` = état le plus récent, régénéré tous
