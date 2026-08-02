@@ -138,21 +138,22 @@
     });
     return tesseractLoading;
   }
-  // Repère toutes les écritures d'heure ("22h", "22h00", "22:00") dans le
-  // texte reconnu, puis les groupe par paires consécutives (une plage
-  // horaire s'exprime presque toujours "début - fin") — heuristique
-  // volontairement simple, d'où les suggestions à valider soi-même.
+  // Repère des paires d'heures PROCHES l'une de l'autre dans le texte
+  // reconnu ("22h00 à 06h00", "22h-6h", "22h/6h00"...) plutôt que
+  // d'apparier n'importe quelles deux heures trouvées dans tout le
+  // document (un montant ou une date mal lus par l'OCR se font sans ça
+  // facilement passer pour une heure, et s'apparient avec une heure
+  // bien réelle mais sans rapport, ailleurs dans le texte) — toujours
+  // une heuristique, d'où les suggestions à valider soi-même.
   function detecterPlagesHoraires(texte) {
-    const motifs = texte.match(/\b([01]?\d|2[0-3])\s?[h:]\s?([0-5]\d)?\b/gi) || [];
-    const heures = motifs.map((m) => {
-      const match = m.match(/(\d{1,2})\s?[h:]\s?(\d{2})?/i);
-      const h = String(match[1]).padStart(2, "0");
-      const mnt = match[2] || "00";
-      return `${h}:${mnt}`;
-    });
+    const heure = "([01]?\\d|2[0-3])\\s?[h:]\\s?([0-5]\\d)?";
+    const re = new RegExp(heure + "\\s*(?:à|a|-|/|et)\\s*" + heure, "gi");
     const paires = [];
-    for (let i = 0; i + 1 < heures.length; i += 2) {
-      if (heures[i] !== heures[i + 1]) paires.push({ start: heures[i], end: heures[i + 1] });
+    let m;
+    while ((m = re.exec(texte)) !== null) {
+      const start = `${String(m[1]).padStart(2, "0")}:${m[2] || "00"}`;
+      const end = `${String(m[3]).padStart(2, "0")}:${m[4] || "00"}`;
+      if (start !== end) paires.push({ start, end });
     }
     return paires;
   }
@@ -207,21 +208,23 @@
   }
 
   // ---------- Heures creuses : photo de référence ----------
-  // Redimensionnée côté client (max 800px de large, JPEG) avant
-  // stockage pour rester léger dans localStorage.
+  // Redimensionnée côté client (max 1600px de large, JPEG) avant
+  // stockage pour rester raisonnable dans localStorage tout en restant
+  // lisible une fois agrandie (la photo sert aussi à vérifier à l'œil
+  // ce que l'OCR a pu mal lire).
   function compressImage(file, callback) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const maxW = 800;
+        const maxW = 1600;
         const scale = Math.min(1, maxW / img.width);
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        callback(canvas.toDataURL("image/jpeg", 0.7));
+        callback(canvas.toDataURL("image/jpeg", 0.8));
       };
       img.src = e.target.result;
     };
@@ -232,6 +235,14 @@
     $("hcPhotoThumbWrap").classList.toggle("hidden", !has);
     $("btnHcPhoto").classList.toggle("hidden", has);
     if (has) $("hcPhotoThumb").src = mstate.heuresCreuses.photoDataUrl;
+  }
+  function openLightbox() {
+    if (!mstate.heuresCreuses.photoDataUrl) return;
+    $("hcLightboxImg").src = mstate.heuresCreuses.photoDataUrl;
+    $("hcLightbox").classList.remove("hidden");
+  }
+  function closeLightbox() {
+    $("hcLightbox").classList.add("hidden");
   }
 
   // ---------- Collecte des poubelles ----------
@@ -259,6 +270,9 @@
     save();
     renderPhoto();
   };
+  $("hcPhotoThumb").onclick = openLightbox;
+  $("btnHcLightboxClose").onclick = closeLightbox;
+  $("hcLightbox").onclick = (e) => { if (e.target === $("hcLightbox")) closeLightbox(); };
   $("collecteInput").addEventListener("input", () => {
     mstate.collecte = $("collecteInput").value;
     save();

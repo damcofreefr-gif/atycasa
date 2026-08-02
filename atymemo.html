@@ -99,10 +99,21 @@
       background: transparent; color: var(--text); font-size: 13px; font-weight: 600; opacity: 0.85;
     }
     .hc-photo-thumb-wrap { margin-top: 10px; position: relative; display: inline-block; }
-    .hc-photo-thumb { max-width: 100%; max-height: 160px; border-radius: 12px; display: block; }
+    .hc-photo-thumb { max-width: 100%; max-height: 160px; border-radius: 12px; display: block; cursor: zoom-in; }
     .hc-photo-remove {
       position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); color: #fff;
       border: none; border-radius: 999px; width: 26px; height: 26px; font-size: 14px;
+    }
+    .hc-photo-hint { font-size: 11px; opacity: 0.5; margin-top: 4px; }
+    .hc-lightbox {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 60;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .hc-lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+    .hc-lightbox-close {
+      position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px;
+      background: rgba(255,255,255,0.12); color: #fff; border: none;
+      border-radius: 999px; width: 36px; height: 36px; font-size: 18px;
     }
     .hc-ocr-status { font-size: 12px; opacity: 0.6; margin-top: 8px; display: flex; align-items: center; gap: 8px; }
     .hc-ocr-spinner {
@@ -157,6 +168,7 @@
           <div class="hc-photo-thumb-wrap hidden" id="hcPhotoThumbWrap">
             <img class="hc-photo-thumb" id="hcPhotoThumb" alt="Photo du contrat">
             <button class="hc-photo-remove" id="btnHcPhotoRemove" aria-label="Retirer la photo">✕</button>
+            <div class="hc-photo-hint">Touche la photo pour l'agrandir</div>
           </div>
           <div class="hc-ocr-status hidden" id="hcOcrStatus">
             <span class="hc-ocr-spinner"></span>
@@ -254,6 +266,11 @@ Démarches à jour sur le site officiel.
       </div>
     </div>
 
+  </div>
+
+  <div class="hc-lightbox hidden" id="hcLightbox">
+    <button class="hc-lightbox-close" id="btnHcLightboxClose" aria-label="Fermer">✕</button>
+    <img id="hcLightboxImg" alt="Photo du contrat en grand">
   </div>
 
   <script src="atymemo.js"></script>

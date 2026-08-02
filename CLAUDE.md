@@ -395,19 +395,26 @@ voir la section identique dans leurs CLAUDE.md respectifs.
     22h-6h), rendues en graphique 24h (barres CSS pures, aucune
     librairie). Photo du contrat importable depuis la galerie (pas
     juste l'appareil photo — input file sans attribut `capture`) et
-    gardée comme repère visuel (redimensionnée côté client à 800px de
-    large max, JPEG qualité 0.7, avant stockage dans localStorage pour
-    rester léger).
+    gardée comme repère visuel (redimensionnée côté client à 1600px de
+    large max, JPEG qualité 0.8 — assez pour rester lisible une fois
+    agrandie, avant stockage dans localStorage). Touchable en plein
+    écran (`hcLightbox`) pour la consulter en grand, notamment pour
+    vérifier à l'œil ce que l'OCR a pu mal lire.
     Lecture automatique (OCR) via Tesseract.js, chargé à la demande
     depuis un CDN uniquement à l'upload d'une photo (jamais au
     chargement de la page, pour ne pas alourdir Atymemo pour qui n'en
     a pas besoin) — tourne 100% dans le navigateur (WASM), aucun
-    serveur. `detecterPlagesHoraires` repère les motifs d'heure dans
-    le texte reconnu et les groupe par paires consécutives (heuristique
-    simple, texte de facture souvent bruité). Résultat présenté comme
-    des **suggestions** ("Détecté : 22:00 → 06:00" + bouton "+
-    Ajouter") jamais appliquées automatiquement aux horaires réels —
-    l'OCR sur une photo de facture reste trop peu fiable pour remplir
+    serveur. `detecterPlagesHoraires` cherche des paires d'heures
+    PROCHES l'une de l'autre dans le texte reconnu (séparées par "à",
+    "-", "/" ou "et"), plutôt que d'apparier n'importe quelles deux
+    heures trouvées dans tout le document — sinon un montant ou une
+    référence mal lus par l'OCR se font facilement passer pour une
+    heure et s'apparient avec une heure bien réelle mais sans rapport,
+    ailleurs dans le texte. Reste une heuristique (texte de facture
+    souvent bruité), résultat présenté comme des **suggestions**
+    ("Détecté : 22:00 → 06:00" + bouton "+ Ajouter") jamais appliquées
+    automatiquement aux horaires réels — l'OCR sur une photo de facture
+    reste trop peu fiable pour remplir
     le graphique sans validation, cf. règle générale du projet sur les
     domaines où une réponse générique/automatique serait trompeuse.
     Échec ou connexion absente (le modèle de langue Tesseract se
