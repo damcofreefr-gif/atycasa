@@ -393,18 +393,26 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   - Heures creuses/pleines : plages horaires éditables (ajout/
     suppression libre, gère les plages à cheval sur minuit comme
     22h-6h), rendues en graphique 24h (barres CSS pures, aucune
-    librairie). Photo du contrat gardée comme repère visuel
-    uniquement (redimensionnée côté client à 800px de large max,
-    JPEG qualité 0.7, avant stockage dans localStorage pour rester
-    léger) — **pas de lecture automatique du contenu (OCR)** : jugé
-    trop peu fiable sur une photo de facture/contrat (mise en page
-    différente selon fournisseur, qualité de photo variable) pour
-    remplir un graphique sans jamais l'avoir vérifié soi-même.
-    Piste laissée ouverte pour plus tard (ex : Tesseract.js, 100%
-    client, aucun serveur requis) si le besoin se confirme, mais
-    toujours avec validation manuelle avant affichage — jamais
-    d'automatique aveugle sur une donnée qui déclenche potentiellement
-    une routine (lancer une lessive, etc.).
+    librairie). Photo du contrat importable depuis la galerie (pas
+    juste l'appareil photo — input file sans attribut `capture`) et
+    gardée comme repère visuel (redimensionnée côté client à 800px de
+    large max, JPEG qualité 0.7, avant stockage dans localStorage pour
+    rester léger).
+    Lecture automatique (OCR) via Tesseract.js, chargé à la demande
+    depuis un CDN uniquement à l'upload d'une photo (jamais au
+    chargement de la page, pour ne pas alourdir Atymemo pour qui n'en
+    a pas besoin) — tourne 100% dans le navigateur (WASM), aucun
+    serveur. `detecterPlagesHoraires` repère les motifs d'heure dans
+    le texte reconnu et les groupe par paires consécutives (heuristique
+    simple, texte de facture souvent bruité). Résultat présenté comme
+    des **suggestions** ("Détecté : 22:00 → 06:00" + bouton "+
+    Ajouter") jamais appliquées automatiquement aux horaires réels —
+    l'OCR sur une photo de facture reste trop peu fiable pour remplir
+    le graphique sans validation, cf. règle générale du projet sur les
+    domaines où une réponse générique/automatique serait trompeuse.
+    Échec ou connexion absente (le modèle de langue Tesseract se
+    télécharge au premier usage) : message neutre, jamais bloquant —
+    les champs restent modifiables à la main comme avant.
   - Jours de collecte des poubelles/tri : simple champ texte libre
     (les formats de collecte varient trop d'une commune à l'autre
     pour être structurés utilement).

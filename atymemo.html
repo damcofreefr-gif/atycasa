@@ -104,6 +104,24 @@
       position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); color: #fff;
       border: none; border-radius: 999px; width: 26px; height: 26px; font-size: 14px;
     }
+    .hc-ocr-status { font-size: 12px; opacity: 0.6; margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+    .hc-ocr-spinner {
+      width: 13px; height: 13px; border-radius: 999px; flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.25); border-top-color: var(--accent);
+      animation: hc-spin 0.7s linear infinite;
+    }
+    @keyframes hc-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .hc-ocr-spinner { animation: none; } }
+    .hc-ocr-suggestions { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .hc-ocr-suggestion {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: rgba(91,227,169,0.08); border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px 10px; font-size: 13px;
+    }
+    .hc-ocr-suggestion button {
+      border: none; background: var(--accent); color: var(--accent-dark);
+      border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
 
     /* ---------- Collecte ---------- */
     .memo-textarea {
@@ -135,11 +153,16 @@
         </div>
         <div class="hc-photo-row">
           <button class="hc-photo-btn" id="btnHcPhoto">📷 Garder une photo de mon contrat (repère visuel)</button>
-          <input type="file" id="hcPhotoInput" accept="image/*" capture="environment" class="hidden">
+          <input type="file" id="hcPhotoInput" accept="image/*" class="hidden">
           <div class="hc-photo-thumb-wrap hidden" id="hcPhotoThumbWrap">
             <img class="hc-photo-thumb" id="hcPhotoThumb" alt="Photo du contrat">
             <button class="hc-photo-remove" id="btnHcPhotoRemove" aria-label="Retirer la photo">✕</button>
           </div>
+          <div class="hc-ocr-status hidden" id="hcOcrStatus">
+            <span class="hc-ocr-spinner"></span>
+            <span id="hcOcrStatusText">Analyse de la photo en cours…</span>
+          </div>
+          <div class="hc-ocr-suggestions hidden" id="hcOcrSuggestions"></div>
         </div>
       </div>
     </div>
