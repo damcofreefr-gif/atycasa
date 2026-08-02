@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#16130F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Atymemo · Atycasa</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg1: #16130F;
+      --bg2: #221C15;
+      --surface: rgba(255,255,255,0.05);
+      --surface2: #241E17;
+      --text: #EAF4F0;
+      --accent: #5BE3A9;
+      --accent-dark: #16130F;
+      --border: rgba(255,255,255,0.12);
+    }
+    * {
+      box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
+      -ms-user-select: none; user-select: none;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
+    body {
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+      padding: max(14px, env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    input, textarea { font-family: inherit; user-select: text; -webkit-user-select: text; }
+    .hidden { display: none !important; }
+
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .back-btn { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 10px; padding: 8px 12px; font-size: 16px; }
+    .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+
+    .card {
+      background: var(--surface2); border-radius: 20px; padding: 16px 18px;
+      width: 100%; max-width: 440px; margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .memo-intro { font-size: 13px; opacity: 0.6; text-align: center; margin-bottom: 14px; line-height: 1.5; }
+
+    /* ---------- Sections repliables ---------- */
+    .memo-section { background: var(--surface); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+    .memo-section-header {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 13px 14px; background: transparent; border: none; color: var(--text);
+      font-size: 15px; font-weight: 700; text-align: left;
+    }
+    .memo-section-header .chev { margin-left: auto; opacity: 0.5; transition: transform 0.2s; font-size: 13px; }
+    .memo-section.open .memo-section-header .chev { transform: rotate(90deg); }
+    .memo-section-body { display: none; padding: 0 14px 14px; }
+    .memo-section.open .memo-section-body { display: block; }
+    .memo-item { font-size: 13.5px; line-height: 1.6; opacity: 0.9; white-space: pre-line; margin-bottom: 10px; }
+    .memo-item:last-child { margin-bottom: 0; }
+    .memo-item b { color: var(--accent); }
+    .memo-caveat { font-size: 11.5px; opacity: 0.55; margin-top: 4px; }
+    .memo-link {
+      display: inline-block; margin-top: 6px; text-decoration: none;
+      color: var(--accent); font-weight: 700; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 10px; padding: 7px 12px;
+    }
+
+    /* ---------- Heures creuses ---------- */
+    .hc-note { font-size: 12px; opacity: 0.6; line-height: 1.5; margin-bottom: 12px; }
+    .hc-range-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .hc-range-row input[type="time"] {
+      flex: 1; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg1); color: var(--text); font-size: 14px; min-width: 0;
+    }
+    .hc-range-sep { opacity: 0.5; font-size: 13px; }
+    .hc-del-btn { background: transparent; border: none; color: var(--text); opacity: 0.5; font-size: 16px; padding: 4px 6px; flex-shrink: 0; }
+    .hc-add-btn {
+      width: 100%; min-height: 38px; border-radius: 10px; border: 1px dashed var(--border);
+      background: transparent; color: var(--text); font-size: 13px; opacity: 0.75; margin-top: 4px;
+    }
+    .hc-bar-wrap { margin-top: 16px; }
+    .hc-bar {
+      position: relative; width: 100%; height: 26px; border-radius: 8px;
+      background: rgba(255,255,255,0.06); overflow: hidden;
+    }
+    .hc-bar-seg { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: 0.8; }
+    .hc-bar-ticks { display: flex; justify-content: space-between; font-size: 10px; opacity: 0.45; margin-top: 4px; }
+    .hc-photo-row { margin-top: 16px; }
+    .hc-photo-btn {
+      width: 100%; min-height: 42px; border-radius: 12px; border: 1px solid var(--border);
+      background: transparent; color: var(--text); font-size: 13px; font-weight: 600; opacity: 0.85;
+    }
+    .hc-photo-thumb-wrap { margin-top: 10px; position: relative; display: inline-block; }
+    .hc-photo-thumb { max-width: 100%; max-height: 160px; border-radius: 12px; display: block; }
+    .hc-photo-remove {
+      position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); color: #fff;
+      border: none; border-radius: 999px; width: 26px; height: 26px; font-size: 14px;
+    }
+
+    /* ---------- Collecte ---------- */
+    .memo-textarea {
+      width: 100%; min-height: 60px; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg1); color: var(--text);
+      font-size: 14px; resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡</button>
+    <div class="h-title">🧭 Atymemo</div>
+  </div>
+
+  <div class="card">
+    <div class="memo-intro">Repères pratiques du quotidien — à consulter, pas à faire.</div>
+
+    <!-- Heures creuses -->
+    <div class="memo-section" id="secHeuresCreuses">
+      <button class="memo-section-header" data-target="secHeuresCreuses">⚡ Heures creuses / pleines<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <div class="hc-note">Propre à ton contrat — personne d'autre ne peut deviner tes horaires exacts. Renseigne-les une fois, ci-dessous.</div>
+        <div id="hcRanges"></div>
+        <button class="hc-add-btn" id="btnHcAdd">+ Ajouter une plage</button>
+        <div class="hc-bar-wrap">
+          <div class="hc-bar" id="hcBar"></div>
+          <div class="hc-bar-ticks"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
+        </div>
+        <div class="hc-photo-row">
+          <button class="hc-photo-btn" id="btnHcPhoto">📷 Garder une photo de mon contrat (repère visuel)</button>
+          <input type="file" id="hcPhotoInput" accept="image/*" capture="environment" class="hidden">
+          <div class="hc-photo-thumb-wrap hidden" id="hcPhotoThumbWrap">
+            <img class="hc-photo-thumb" id="hcPhotoThumb" alt="Photo du contrat">
+            <button class="hc-photo-remove" id="btnHcPhotoRemove" aria-label="Retirer la photo">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collecte des poubelles -->
+    <div class="memo-section" id="secCollecte">
+      <button class="memo-section-header" data-target="secCollecte">🗑️ Jours de collecte<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <textarea class="memo-textarea" id="collecteInput" maxlength="200" placeholder="Ex : Ordures mardi/vendredi, tri jeudi, verre 1er lundi du mois"></textarea>
+      </div>
+    </div>
+
+    <!-- Contacts coupures -->
+    <div class="memo-section" id="secCoupures">
+      <button class="memo-section-header" data-target="secCoupures">🔌 Coupure élec / gaz<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <div class="memo-item"><b>Gaz — urgence sécurité (GRDF)</b>
+0 800 47 33 33 — numéro national gratuit, 24h/24.</div>
+        <div class="memo-item"><b>Électricité — dépannage (Enedis)</b>
+Numéro selon département, pas de numéro national unique.
+<a class="memo-link" href="https://www.enedis.fr" target="_blank" rel="noopener noreferrer">Trouver mon numéro sur enedis.fr ↗</a></div>
+      </div>
+    </div>
+
+    <!-- Papiers administratifs -->
+    <div class="memo-section" id="secPapiers">
+      <button class="memo-section-header" data-target="secPapiers">🗂️ Papiers administratifs<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <div class="memo-item"><b>Durées de conservation courantes</b>
+Factures eau / élec / gaz : 5 ans · Factures téléphone / internet : 1 an · Quittances de loyer : 3 ans après le départ · Relevés bancaires : 5 ans · Bulletins de salaire : jusqu'à la retraite · Avis d'imposition : 3 ans (mieux : à vie) · Factures de travaux / artisan : 10 ans · Contrats d'assurance : durée du contrat + 2 ans après résiliation · Ordonnances / factures médicales : 2 ans
+<span class="memo-caveat">En cas de doute, garde le document plutôt que de le jeter.</span></div>
+        <div class="memo-item"><b>Durées de validité des documents</b>
+Carte d'identité (adulte) : 10 ans · Passeport (adulte) : 10 ans · Permis de conduire : pas de limite (sauf poids lourd/transport) · Carte grise : pas d'expiration, mais adresse à mettre à jour sous 1 mois en cas de déménagement
+<span class="memo-caveat">À vérifier sur ton document, ça peut varier.</span></div>
+        <div class="memo-item"><b>Perte ou vol d'un papier</b>
+Démarches à jour sur le site officiel.
+<a class="memo-link" href="https://www.service-public.fr/particuliers/vosdroits" target="_blank" rel="noopener noreferrer">service-public.fr ↗</a></div>
+      </div>
+    </div>
+
+    <!-- Véhicule -->
+    <div class="memo-section" id="secVehicule">
+      <button class="memo-section-header" data-target="secVehicule">🚗 Véhicule<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <div class="memo-item"><b>Contrôle technique</b>
+1er contrôle : dans les 6 mois avant le 4ᵉ anniversaire de la 1ʳᵉ mise en circulation. Ensuite : tous les 2 ans (véhicule essence/diesel personnel).
+<span class="memo-caveat">À titre indicatif — vérifie ta date exacte sur ta carte grise.</span></div>
+        <div class="memo-item"><b>Vignette Crit'Air</b>
+<a class="memo-link" href="https://www.certificat-air.gouv.fr" target="_blank" rel="noopener noreferrer">certificat-air.gouv.fr ↗</a></div>
+        <div class="memo-item"><b>Prix des carburants</b>
+<a class="memo-link" href="https://www.prix-carburants.gouv.fr/" target="_blank" rel="noopener noreferrer">prix-carburants.gouv.fr ↗</a></div>
+      </div>
+    </div>
+
+    <!-- Numéros utiles -->
+    <div class="memo-section" id="secNumeros">
+      <button class="memo-section-header" data-target="secNumeros">📞 Numéros utiles<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <div class="memo-item"><b>Urgences</b>
+15 SAMU · 17 Police · 18 Pompiers · 112 (numéro d'urgence européen) · 114 (par SMS, sourds/malentendants)</div>
+        <div class="memo-item"><b>Opposition carte bancaire</b>
+0 892 705 705 (numéro interbancaire national)
+<span class="memo-caveat">Sinon, contacte directement ta banque.</span></div>
+        <div class="memo-item"><b>Pharmacie de garde</b>
+3237 (numéro national)</div>
+        <div class="memo-item"><b>Allo Service Public</b>
+3939 — pour toute question administrative</div>
+      </div>
+    </div>
+
+    <!-- Numérique -->
+    <div class="memo-section" id="secNumerique">
+      <button class="memo-section-header" data-target="secNumerique">💻 Numérique<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <div class="memo-item"><b>Règle de sauvegarde 3-2-1</b>
+3 copies du fichier au total · 2 supports différents (ex : disque dur + cloud) · 1 copie hors de chez toi (cloud, ou disque chez un proche)
+<span class="memo-caveat">Pas besoin de tout faire d'un coup — une 2ᵉ copie vaut déjà mieux qu'aucune.</span></div>
+        <div class="memo-item"><b>Piratage / arnaque en ligne</b>
+<a class="memo-link" href="https://www.cybermalveillance.gouv.fr" target="_blank" rel="noopener noreferrer">cybermalveillance.gouv.fr ↗</a></div>
+      </div>
+    </div>
+
+    <!-- Déplacements -->
+    <div class="memo-section" id="secDeplacements">
+      <button class="memo-section-header" data-target="secDeplacements">🚆 Déplacements<span class="chev">▸</span></button>
+      <div class="memo-section-body">
+        <div class="memo-item"><b>Train</b>
+<a class="memo-link" href="https://www.sncf-connect.com" target="_blank" rel="noopener noreferrer">sncf-connect.com ↗</a></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="atymemo.js"></script>
+</body>
+</html>

@@ -365,6 +365,52 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   utilisateur — pour que les rappels arrivent même app fermée depuis
   longtemps. Spécification détaillée à faire à ce moment-là.
 
+## Atymemo (aide-mémoire logistique)
+- Bouton 🧭 dans l'en-tête d'Atycasa (à droite du bouton 📝). Rôle :
+  repères pratiques du quotidien à consulter (numéros utiles, durées
+  légales, liens officiels) — jamais une action à cocher, contrairement
+  à Atygo. Page autonome, aucun lien de données avec le reste de l'app.
+  Simple lien `<a href="atymemo.html">` dans l'en-tête (pas de script
+  chargé sur index.html : ni pastille, ni logique en arrière-plan
+  nécessaire pour cette page).
+- Fichiers atymemo.html + atymemo.js (mêmes contraintes vanilla que
+  le reste), chargés uniquement sur atymemo.html.
+- Sections repliables (`.memo-section`, ouverture/fermeture au tap
+  sur l'en-tête) : heures creuses ouverte par défaut (la plus
+  utile/personnalisée), les autres repliées pour ne pas noyer la
+  page. Contenu factuel figé écrit directement dans le HTML (durées
+  de conservation des papiers, validité des documents, règle de
+  sauvegarde 3-2-1 — dupliqué depuis les mêmes textes qu'Atygo,
+  volontairement : pas d'import entre les deux fichiers vanilla, donc
+  à mettre à jour aux deux endroits si ce contenu change un jour) et
+  numéros/liens officiels (urgences, opposition CB, pharmacie de
+  garde, contrôle technique, Crit'Air, cybermalveillance.gouv.fr...).
+  Numéros vérifiés au meilleur effort — pas de garantie absolue de
+  fraîcheur sur les montants/numéros qui peuvent changer (ex :
+  plafonds, tarifs), à re-vérifier périodiquement.
+- Deux sections personnalisables (aucune valeur générique fiable
+  n'existant — propre à chaque foyer/commune/contrat) :
+  - Heures creuses/pleines : plages horaires éditables (ajout/
+    suppression libre, gère les plages à cheval sur minuit comme
+    22h-6h), rendues en graphique 24h (barres CSS pures, aucune
+    librairie). Photo du contrat gardée comme repère visuel
+    uniquement (redimensionnée côté client à 800px de large max,
+    JPEG qualité 0.7, avant stockage dans localStorage pour rester
+    léger) — **pas de lecture automatique du contenu (OCR)** : jugé
+    trop peu fiable sur une photo de facture/contrat (mise en page
+    différente selon fournisseur, qualité de photo variable) pour
+    remplir un graphique sans jamais l'avoir vérifié soi-même.
+    Piste laissée ouverte pour plus tard (ex : Tesseract.js, 100%
+    client, aucun serveur requis) si le besoin se confirme, mais
+    toujours avec validation manuelle avant affichage — jamais
+    d'automatique aveugle sur une donnée qui déclenche potentiellement
+    une routine (lancer une lessive, etc.).
+  - Jours de collecte des poubelles/tri : simple champ texte libre
+    (les formats de collecte varient trop d'une commune à l'autre
+    pour être structurés utilement).
+- Données : localStorage clé "atymemo-v1", {heuresCreuses: {ranges:
+  [{start, end}], photoDataUrl}, collecte}.
+
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
   Déploiement = push des fichiers statiques tels quels sur GitHub Pages.
