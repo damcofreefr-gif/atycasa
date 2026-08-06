@@ -440,8 +440,8 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   liste de véhicules (ajout/suppression libre, `id` généré par
   véhicule), chacun avec nom, date de contrôle technique, date
   d'échéance d'assurance, et pneus avant/arrière suivis séparément
-  (dimensions + km parcourus sur le train actuel — utile quand seuls
-  2 pneus sont changés à la fois). Chaque date affiche un statut
+  (marque, modèle, dimensions + km parcourus sur le train actuel —
+  utile quand seuls 2 pneus sont changés à la fois). Chaque date affiche un statut
   factuel à code couleur (`statutDate` : vert si >30j, ambre si ≤30j,
   rouge si dépassée) — ton neutre, jamais un message de reproche,
   mais un vrai code couleur reste justifié ici (contrairement aux
@@ -491,7 +491,8 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   [{start, end, lastReminderDayKey}], photoDataUrl}, collecte,
   notifHc, notifAsked, vehicules: [{id, nom, dateCT, dateAssurance,
   lastReminderCTFor, lastReminderAssuranceFor,
-  pneus: {av: {dimension, km}, ar: {dimension, km}}}], ordreSections}.
+  pneus: {av: {marque, modele, dimension, km}, ar: {marque, modele,
+  dimension, km}}}], ordreSections}.
 
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.

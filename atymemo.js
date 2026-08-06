@@ -645,6 +645,18 @@
     const lab = document.createElement("div");
     lab.className = "veh-tire-label";
     lab.textContent = label;
+    const marque = document.createElement("input");
+    marque.type = "text";
+    marque.placeholder = "Marque (ex : Michelin)";
+    marque.maxLength = 30;
+    marque.value = pneu.marque || "";
+    marque.addEventListener("input", () => { pneu.marque = marque.value; onSave(); });
+    const modele = document.createElement("input");
+    modele.type = "text";
+    modele.placeholder = "Modèle (ex : Primacy 4)";
+    modele.maxLength = 30;
+    modele.value = pneu.modele || "";
+    modele.addEventListener("input", () => { pneu.modele = modele.value; onSave(); });
     const dim = document.createElement("input");
     dim.type = "text";
     dim.placeholder = "Dimensions (ex : 205/55 R16)";
@@ -659,6 +671,8 @@
     km.value = pneu.km != null ? pneu.km : "";
     km.addEventListener("input", () => { pneu.km = km.value ? Number(km.value) : null; onSave(); });
     col.appendChild(lab);
+    col.appendChild(marque);
+    col.appendChild(modele);
     col.appendChild(dim);
     col.appendChild(km);
     return col;
@@ -722,7 +736,10 @@
       nom: "",
       dateCT: "",
       dateAssurance: "",
-      pneus: { av: { dimension: "", km: null }, ar: { dimension: "", km: null } },
+      pneus: {
+        av: { marque: "", modele: "", dimension: "", km: null },
+        ar: { marque: "", modele: "", dimension: "", km: null },
+      },
     });
     save();
     renderVehicules();
