@@ -142,10 +142,70 @@
     if (dirty) save();
   }
 
+  // ---------- Rappel sur les échéances véhicule (toutes les pages) ----------
+  // Automatique dès qu'une date est renseignée (pas d'interrupteur séparé,
+  // contrairement aux heures creuses) — remplir la date suffit à indiquer
+  // qu'on veut être prévenu. Une seule notif par valeur de date exacte
+  // (`lastReminderCTFor`/`lastReminderAssuranceFor`) : renouveler le CT ou
+  // l'assurance et saisir la nouvelle date réarme automatiquement le
+  // rappel, sans jamais re-notifier en boucle pour une date déjà connue.
+  const VEHICULE_LEAD_DAYS = 30;
+  function joursJusque(dateStr) {
+    const cible = new Date(dateStr + "T00:00:00");
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+    return Math.round((cible - aujourdhui) / 86400000);
+  }
+  function notifierEcheanceVehicule(nomVehicule, label, emoji, jours, dateStr) {
+    const nom = nomVehicule || "ton véhicule";
+    const dateAffichee = new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR");
+    const text =
+      jours < 0
+        ? `${emoji} ${label} de ${nom} dépassé(e) depuis ${Math.abs(jours)} j (${dateAffichee})`
+        : jours === 0
+        ? `${emoji} ${label} de ${nom} aujourd'hui (${dateAffichee})`
+        : `${emoji} ${label} de ${nom} dans ${jours} j (${dateAffichee})`;
+    if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    showAtymemoBanner(text);
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification("Atycasa · Atymemo", { body: text, icon: "icons/icon-192.png" });
+      } catch (e) {
+        // silencieux
+      }
+    }
+  }
+  function checkVehiculeReminders() {
+    let dirty = false;
+    (mstate.vehicules || []).forEach((v) => {
+      if (v.dateCT) {
+        const jours = joursJusque(v.dateCT);
+        if (jours <= VEHICULE_LEAD_DAYS && v.lastReminderCTFor !== v.dateCT) {
+          v.lastReminderCTFor = v.dateCT;
+          dirty = true;
+          notifierEcheanceVehicule(v.nom, "Contrôle technique", "🔧", jours, v.dateCT);
+        }
+      }
+      if (v.dateAssurance) {
+        const jours = joursJusque(v.dateAssurance);
+        if (jours <= VEHICULE_LEAD_DAYS && v.lastReminderAssuranceFor !== v.dateAssurance) {
+          v.lastReminderAssuranceFor = v.dateAssurance;
+          dirty = true;
+          notifierEcheanceVehicule(v.nom, "Assurance", "📄", jours, v.dateAssurance);
+        }
+      }
+    });
+    if (dirty) save();
+  }
+
   // ---------- Init partagée (toutes les pages) ----------
   injectBannerStyle();
   checkHcReminders();
-  setInterval(checkHcReminders, CHECK_INTERVAL_MS);
+  checkVehiculeReminders();
+  setInterval(() => {
+    checkHcReminders();
+    checkVehiculeReminders();
+  }, CHECK_INTERVAL_MS);
 
   // ---------- Interface (atymemo.html uniquement) ----------
   if (!onMemoPage) return;
@@ -458,8 +518,20 @@
       head.appendChild(delBtn);
       card.appendChild(head);
 
-      card.appendChild(champDate("Contrôle technique", v.dateCT, (val) => { v.dateCT = val; save(); renderVehicules(); }));
-      card.appendChild(champDate("Échéance assurance", v.dateAssurance, (val) => { v.dateAssurance = val; save(); renderVehicules(); }));
+      card.appendChild(champDate("Contrôle technique", v.dateCT, (val) => {
+        v.dateCT = val;
+        if (val) ensureNotifPermission();
+        save();
+        renderVehicules();
+        checkVehiculeReminders();
+      }));
+      card.appendChild(champDate("Échéance assurance", v.dateAssurance, (val) => {
+        v.dateAssurance = val;
+        if (val) ensureNotifPermission();
+        save();
+        renderVehicules();
+        checkVehiculeReminders();
+      }));
 
       const tiresRow = document.createElement("div");
       tiresRow.className = "veh-tires-row";

@@ -446,16 +446,29 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   rouge si dépassée) — ton neutre, jamais un message de reproche,
   mais un vrai code couleur reste justifié ici (contrairement aux
   zones d'Atycasa) car CT et assurance sont des échéances légales
-  réelles. Première itération volontairement minimale (pas encore de
-  rappel programmé sur ces dates, pas de champ pour autre chose que
-  ces 3 infos) — à enrichir plus tard.
+  réelles. Première itération volontairement minimale (pas de champ
+  pour autre chose que ces 3 infos) — à enrichir plus tard.
   Champs texte/numériques sur `input` (pas `change`) pour ne rien
   perdre si le focus change sans passer par un blur explicite ; les
   dates restent sur `change`, un `<input type="date">` déclenche cet
   événement de façon fiable dès la sélection.
+- Rappel sur les échéances CT/assurance : automatique dès qu'une date
+  est renseignée, pas d'interrupteur séparé (remplir la date suffit à
+  indiquer qu'on veut être prévenu) — permission de notification
+  demandée à ce moment-là (geste utilisateur réel), état partagé avec
+  le rappel heures creuses (`notifAsked`). Se déclenche dans les
+  `VEHICULE_LEAD_DAYS` (30) jours avant l'échéance, y compris si déjà
+  dépassée à la saisie (formulation neutre : "dépassé(e) depuis X j",
+  jamais un ton de reproche). Une seule notif par valeur de date exacte
+  (`lastReminderCTFor`/`lastReminderAssuranceFor`) : au lieu d'un
+  réarmement calendaire comme les heures creuses (pas de récurrence
+  ici, un CT n'est pas quotidien), c'est le fait de saisir une
+  *nouvelle* date après renouvellement qui réarme naturellement le
+  rappel.
 - Données : localStorage clé "atymemo-v1", {heuresCreuses: {ranges:
   [{start, end, lastReminderDayKey}], photoDataUrl}, collecte,
   notifHc, notifAsked, vehicules: [{id, nom, dateCT, dateAssurance,
+  lastReminderCTFor, lastReminderAssuranceFor,
   pneus: {av: {dimension, km}, ar: {dimension, km}}}]}.
 
 ## Architecture — contraintes strictes
