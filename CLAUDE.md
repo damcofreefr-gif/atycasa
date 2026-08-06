@@ -384,7 +384,7 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   volontairement : pas d'import entre les deux fichiers vanilla, donc
   à mettre à jour aux deux endroits si ce contenu change un jour) et
   numéros/liens officiels (urgences, opposition CB, pharmacie de
-  garde, contrôle technique, Crit'Air, cybermalveillance.gouv.fr...).
+  garde, cybermalveillance.gouv.fr...).
   Numéros vérifiés au meilleur effort — pas de garantie absolue de
   fraîcheur sur les montants/numéros qui peuvent changer (ex :
   plafonds, tarifs), à re-vérifier périodiquement.
@@ -435,9 +435,28 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   logique qu'Atyclock/Atygo/Boost, mais état propre à Atymemo (pas de
   donnée partagée). Vérifié toutes les 60s (`checkHcReminders`),
   suffisant pour une fenêtre d'1h.
+- Mes véhicules (section "🚗 Mes véhicules", remplace l'ancien contenu
+  figé contrôle technique/Crit'Air/carburant supprimé le 02/08) :
+  liste de véhicules (ajout/suppression libre, `id` généré par
+  véhicule), chacun avec nom, date de contrôle technique, date
+  d'échéance d'assurance, et pneus avant/arrière suivis séparément
+  (dimensions + km parcourus sur le train actuel — utile quand seuls
+  2 pneus sont changés à la fois). Chaque date affiche un statut
+  factuel à code couleur (`statutDate` : vert si >30j, ambre si ≤30j,
+  rouge si dépassée) — ton neutre, jamais un message de reproche,
+  mais un vrai code couleur reste justifié ici (contrairement aux
+  zones d'Atycasa) car CT et assurance sont des échéances légales
+  réelles. Première itération volontairement minimale (pas encore de
+  rappel programmé sur ces dates, pas de champ pour autre chose que
+  ces 3 infos) — à enrichir plus tard.
+  Champs texte/numériques sur `input` (pas `change`) pour ne rien
+  perdre si le focus change sans passer par un blur explicite ; les
+  dates restent sur `change`, un `<input type="date">` déclenche cet
+  événement de façon fiable dès la sélection.
 - Données : localStorage clé "atymemo-v1", {heuresCreuses: {ranges:
   [{start, end, lastReminderDayKey}], photoDataUrl}, collecte,
-  notifHc, notifAsked}.
+  notifHc, notifAsked, vehicules: [{id, nom, dateCT, dateAssurance,
+  pneus: {av: {dimension, km}, ar: {dimension, km}}}]}.
 
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.

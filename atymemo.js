@@ -26,6 +26,7 @@
         if (d && d.heuresCreuses && Array.isArray(d.heuresCreuses.ranges)) {
           if (typeof d.notifHc !== "boolean") d.notifHc = false;
           if (typeof d.notifAsked !== "boolean") d.notifAsked = false;
+          if (!Array.isArray(d.vehicules)) d.vehicules = [];
           return d;
         }
       }
@@ -37,6 +38,7 @@
       collecte: "",
       notifHc: false,
       notifAsked: false,
+      vehicules: [],
     };
   }
   let mstate = load();
@@ -365,6 +367,121 @@
     $("collecteInput").value = mstate.collecte || "";
   }
 
+  // ---------- Mes véhicules ----------
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  // Statut neutre (jamais "en retard" avec un ton de reproche, juste un
+  // repère factuel) — le CT/l'assurance restent des échéances légales,
+  // donc un code couleur léger reste pertinent ici, contrairement aux
+  // zones d'Atycasa.
+  function statutDate(dateStr) {
+    if (!dateStr) return null;
+    const cible = new Date(dateStr + "T00:00:00");
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+    const jours = Math.round((cible - aujourdhui) / 86400000);
+    if (jours < 0) return { texte: `Dépassé de ${Math.abs(jours)} j`, classe: "veh-status-late" };
+    if (jours === 0) return { texte: "Aujourd'hui", classe: "veh-status-soon" };
+    if (jours <= 30) return { texte: `Dans ${jours} j`, classe: "veh-status-soon" };
+    return { texte: `Dans ${jours} j`, classe: "veh-status-ok" };
+  }
+  function champDate(label, value, onChange) {
+    const field = document.createElement("div");
+    field.className = "veh-field";
+    const lab = document.createElement("label");
+    lab.className = "veh-field-label";
+    lab.textContent = label;
+    const input = document.createElement("input");
+    input.type = "date";
+    input.value = value || "";
+    field.appendChild(lab);
+    field.appendChild(input);
+    const statut = statutDate(value);
+    if (statut) {
+      const status = document.createElement("span");
+      status.className = "veh-field-status " + statut.classe;
+      status.textContent = statut.texte;
+      field.appendChild(status);
+    }
+    input.onchange = () => onChange(input.value);
+    return field;
+  }
+  function champPneu(label, pneu, onSave) {
+    const col = document.createElement("div");
+    col.className = "veh-tire-col";
+    const lab = document.createElement("div");
+    lab.className = "veh-tire-label";
+    lab.textContent = label;
+    const dim = document.createElement("input");
+    dim.type = "text";
+    dim.placeholder = "Dimensions (ex : 205/55 R16)";
+    dim.maxLength = 20;
+    dim.value = pneu.dimension || "";
+    dim.addEventListener("input", () => { pneu.dimension = dim.value; onSave(); });
+    const km = document.createElement("input");
+    km.type = "number";
+    km.inputMode = "numeric";
+    km.min = 0;
+    km.placeholder = "Km sur ce train";
+    km.value = pneu.km != null ? pneu.km : "";
+    km.addEventListener("input", () => { pneu.km = km.value ? Number(km.value) : null; onSave(); });
+    col.appendChild(lab);
+    col.appendChild(dim);
+    col.appendChild(km);
+    return col;
+  }
+  function renderVehicules() {
+    const wrap = $("vehiculesList");
+    wrap.innerHTML = "";
+    mstate.vehicules.forEach((v, idx) => {
+      const card = document.createElement("div");
+      card.className = "veh-card";
+
+      const head = document.createElement("div");
+      head.className = "veh-card-head";
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.className = "veh-name-input";
+      nameInput.placeholder = "Nom du véhicule (ex : Clio)";
+      nameInput.maxLength = 30;
+      nameInput.value = v.nom || "";
+      nameInput.addEventListener("input", () => { v.nom = nameInput.value; save(); });
+      const delBtn = document.createElement("button");
+      delBtn.className = "veh-del-btn";
+      delBtn.textContent = "✕";
+      delBtn.setAttribute("aria-label", "Supprimer ce véhicule");
+      delBtn.onclick = () => {
+        mstate.vehicules.splice(idx, 1);
+        save();
+        renderVehicules();
+      };
+      head.appendChild(nameInput);
+      head.appendChild(delBtn);
+      card.appendChild(head);
+
+      card.appendChild(champDate("Contrôle technique", v.dateCT, (val) => { v.dateCT = val; save(); renderVehicules(); }));
+      card.appendChild(champDate("Échéance assurance", v.dateAssurance, (val) => { v.dateAssurance = val; save(); renderVehicules(); }));
+
+      const tiresRow = document.createElement("div");
+      tiresRow.className = "veh-tires-row";
+      tiresRow.appendChild(champPneu("Avant", v.pneus.av, save));
+      tiresRow.appendChild(champPneu("Arrière", v.pneus.ar, save));
+      card.appendChild(tiresRow);
+
+      wrap.appendChild(card);
+    });
+  }
+  function addVehicule() {
+    mstate.vehicules.push({
+      id: uid(),
+      nom: "",
+      dateCT: "",
+      dateAssurance: "",
+      pneus: { av: { dimension: "", km: null }, ar: { dimension: "", km: null } },
+    });
+    save();
+    renderVehicules();
+  }
+
   // ---------- Rappel 1h avant : interrupteur ----------
   function renderNotifToggle() {
     $("hcNotifToggle").classList.toggle("on", !!mstate.notifHc);
@@ -373,6 +490,7 @@
   // ---------- Liaison ----------
   $("btnBack").onclick = () => { location.href = "index.html"; };
   $("btnHcAdd").onclick = addRange;
+  $("btnVehAdd").onclick = addVehicule;
   $("hcNotifToggle").onclick = () => {
     mstate.notifHc = !mstate.notifHc;
     if (mstate.notifHc) ensureNotifPermission();
@@ -409,4 +527,5 @@
   renderPhoto();
   renderCollecte();
   renderNotifToggle();
+  renderVehicules();
 })();

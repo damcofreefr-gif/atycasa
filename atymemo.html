@@ -151,6 +151,35 @@
     .switch.on { background: rgba(91,227,169,0.25); }
     .switch.on::after { background: var(--accent); transform: translateX(20px); }
 
+    /* ---------- Mes véhicules ---------- */
+    .veh-intro { font-size: 12px; opacity: 0.6; line-height: 1.5; margin-bottom: 12px; }
+    .veh-card {
+      background: var(--bg1); border-radius: 12px; padding: 12px; margin-bottom: 10px;
+    }
+    .veh-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .veh-name-input {
+      flex: 1; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text); font-size: 14px; font-weight: 700; min-width: 0;
+    }
+    .veh-del-btn { background: transparent; border: none; color: var(--text); opacity: 0.5; font-size: 16px; padding: 4px 6px; flex-shrink: 0; }
+    .veh-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .veh-field-label { font-size: 12px; opacity: 0.65; flex-shrink: 0; width: 132px; }
+    .veh-field input[type="date"] {
+      flex: 1; min-width: 0; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text); font-size: 13px;
+    }
+    .veh-field-status { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; flex-shrink: 0; }
+    .veh-status-ok { color: var(--accent); background: rgba(91,227,169,0.1); }
+    .veh-status-soon { color: #E8C05B; background: rgba(232,192,91,0.12); }
+    .veh-status-late { color: #E8875B; background: rgba(232,135,91,0.12); }
+    .veh-tires-row { display: flex; gap: 10px; margin-top: 10px; }
+    .veh-tire-col { flex: 1; min-width: 0; }
+    .veh-tire-label { font-size: 12px; opacity: 0.65; margin-bottom: 6px; }
+    .veh-tire-col input {
+      width: 100%; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text); font-size: 13px; margin-bottom: 6px;
+    }
+
     /* ---------- Collecte ---------- */
     .memo-textarea {
       width: 100%; min-height: 60px; padding: 10px 12px; border-radius: 10px;
@@ -239,17 +268,13 @@ Démarches à jour sur le site officiel.
       </div>
     </div>
 
-    <!-- Véhicule -->
+    <!-- Mes véhicules -->
     <div class="memo-section" id="secVehicule">
-      <button class="memo-section-header" data-target="secVehicule">🚗 Véhicule<span class="chev">▸</span></button>
+      <button class="memo-section-header" data-target="secVehicule">🚗 Mes véhicules<span class="chev">▸</span></button>
       <div class="memo-section-body">
-        <div class="memo-item"><b>Contrôle technique</b>
-1er contrôle : dans les 6 mois avant le 4ᵉ anniversaire de la 1ʳᵉ mise en circulation. Ensuite : tous les 2 ans (véhicule essence/diesel personnel).
-<span class="memo-caveat">À titre indicatif — vérifie ta date exacte sur ta carte grise.</span></div>
-        <div class="memo-item"><b>Vignette Crit'Air</b>
-<a class="memo-link" href="https://www.certificat-air.gouv.fr" target="_blank" rel="noopener noreferrer">certificat-air.gouv.fr ↗</a></div>
-        <div class="memo-item"><b>Prix des carburants</b>
-<a class="memo-link" href="https://www.prix-carburants.gouv.fr/" target="_blank" rel="noopener noreferrer">prix-carburants.gouv.fr ↗</a></div>
+        <div class="veh-intro">Contrôle technique, assurance, pneus — propre à chaque véhicule.</div>
+        <div id="vehiculesList"></div>
+        <button class="hc-add-btn" id="btnVehAdd">+ Ajouter un véhicule</button>
       </div>
     </div>
 
