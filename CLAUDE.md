@@ -465,11 +465,33 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   ici, un CT n'est pas quotidien), c'est le fait de saisir une
   *nouvelle* date après renouvellement qui réarme naturellement le
   rappel.
+- Réorganisation des cases (appui long) : appui long (500 ms) sur
+  l'en-tête d'une case → "mode déplacer" (toutes les cases se referment
+  et frétillent légèrement, chevrons masqués, barre "✓ Terminé" en
+  haut de page). Un mouvement > 10px avant les 500 ms annule l'appui
+  long (geste de scroll, pas de bascule accidentelle de la case ni
+  d'entrée en mode déplacer) — même logique que les interrupteurs à
+  appui long d'Atyclock. La case tenue commence aussitôt à suivre le
+  doigt ; une fois en mode déplacer, un simple appui (sans attendre)
+  sur n'importe quelle case démarre directement son glissement.
+  Mécanique de glissement : Pointer Events, la case déplacée passe en
+  `position: fixed` (suit le doigt au pixel près) pendant qu'une case
+  fantôme (`.memo-section-placeholder`) tient sa place dans la liste ;
+  les voisines se réajustent avec une petite animation (technique
+  FLIP basée sur `getBoundingClientRect().top`, jamais faussée par un
+  `transform` en cours) plutôt qu'un saut brut — désactivée si
+  `prefers-reduced-motion`. `touch-action: none` sur les en-têtes de
+  case pour empêcher le scroll natif de "voler" le geste pendant
+  l'appui long. À la dépose, la case prend la place de la case
+  fantôme et l'ordre est aussitôt persisté (`mstate.ordreSections`,
+  tableau des 8 id de section) ; `applySavedOrder()` réordonne le DOM
+  au chargement (repli sur l'ordre par défaut si absent ou invalide).
+  "✓ Terminé" sort du mode déplacer sans autre confirmation.
 - Données : localStorage clé "atymemo-v1", {heuresCreuses: {ranges:
   [{start, end, lastReminderDayKey}], photoDataUrl}, collecte,
   notifHc, notifAsked, vehicules: [{id, nom, dateCT, dateAssurance,
   lastReminderCTFor, lastReminderAssuranceFor,
-  pneus: {av: {dimension, km}, ar: {dimension, km}}}]}.
+  pneus: {av: {dimension, km}, ar: {dimension, km}}}], ordreSections}.
 
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.

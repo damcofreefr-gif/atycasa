@@ -210,12 +210,186 @@
   // ---------- Interface (atymemo.html uniquement) ----------
   if (!onMemoPage) return;
 
-  // ---------- Sections repliables ----------
+  // ---------- Ordre des sections (persisté, réorganisable) ----------
+  const SECTION_IDS = [
+    "secHeuresCreuses", "secCollecte", "secCoupures", "secPapiers",
+    "secVehicule", "secNumeros", "secNumerique", "secDeplacements",
+  ];
+  function applySavedOrder() {
+    const card = document.querySelector(".card");
+    let order = mstate.ordreSections;
+    if (!Array.isArray(order) || order.length !== SECTION_IDS.length || !SECTION_IDS.every((id) => order.includes(id))) {
+      order = SECTION_IDS;
+    }
+    order.forEach((id) => {
+      const el = $(id);
+      if (el) card.appendChild(el);
+    });
+  }
+  function saveOrderFromDom() {
+    mstate.ordreSections = Array.from(document.querySelectorAll(".memo-section")).map((el) => el.id);
+    save();
+  }
+  applySavedOrder();
+
+  // ---------- Sections repliables + réorganisation (appui long) ----------
+  // Appui long (500 ms) sur l'en-tête d'une case : entre en "mode
+  // déplacer" (toutes les cases se referment et frétillent) et démarre
+  // aussitôt le glissement de la case tenue — comme réorganiser des
+  // icônes sur un téléphone. Une fois en mode déplacer, un simple appui
+  // (sans attendre) sur n'importe quelle case démarre directement son
+  // glissement. "✓ Terminé" sort du mode.
+  const LONG_PRESS_MS = 500;
+  const MOVE_CANCEL_PX = 10;
+  let reorderMode = false;
+  let longPressTimer = null;
+  let dragCtx = null; // { section, placeholder, pointerId, startClientY, startTop }
+
+  function reducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  // FLIP : anime le "réajustement" des cases voisines quand la case
+  // fantôme (placeholder) change de place pendant un glissement, plutôt
+  // qu'un saut brut — offsetTop (via getBoundingClientRect) sert de
+  // vérité terrain car il n'est jamais faussé par un transform en cours.
+  function flip(mutate) {
+    const items = Array.from(document.querySelectorAll(".memo-section")).filter((el) => el !== (dragCtx && dragCtx.section));
+    const before = new Map(items.map((el) => [el, el.getBoundingClientRect().top]));
+    mutate();
+    if (reducedMotion()) return;
+    items.forEach((el) => {
+      const prevTop = before.get(el);
+      const newTop = el.getBoundingClientRect().top;
+      const delta = prevTop - newTop;
+      if (delta) {
+        el.style.transition = "none";
+        el.style.transform = `translateY(${delta}px)`;
+        requestAnimationFrame(() => {
+          el.style.transition = "transform 0.2s ease";
+          el.style.transform = "";
+        });
+      }
+    });
+  }
+  function enterReorderMode() {
+    reorderMode = true;
+    document.querySelectorAll(".memo-section").forEach((el) => el.classList.remove("open"));
+    document.body.classList.add("reorder-active");
+    $("reorderBar").classList.add("show");
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+  function exitReorderMode() {
+    reorderMode = false;
+    document.body.classList.remove("reorder-active");
+    $("reorderBar").classList.remove("show");
+  }
+  function startDrag(section, pointerId, clientY) {
+    const rect = section.getBoundingClientRect();
+    const placeholder = document.createElement("div");
+    placeholder.className = "memo-section-placeholder";
+    placeholder.style.height = rect.height + "px";
+    section.parentNode.insertBefore(placeholder, section);
+    dragCtx = { section, placeholder, pointerId, startClientY: clientY, startTop: rect.top };
+    section.style.position = "fixed";
+    section.style.left = rect.left + "px";
+    section.style.top = rect.top + "px";
+    section.style.width = rect.width + "px";
+    section.classList.add("dragging");
+    document.addEventListener("pointermove", onDragMove);
+    document.addEventListener("pointerup", endDrag);
+    document.addEventListener("pointercancel", endDrag);
+  }
+  function onDragMove(e) {
+    if (!dragCtx || e.pointerId !== dragCtx.pointerId) return;
+    const dy = e.clientY - dragCtx.startClientY;
+    const top = dragCtx.startTop + dy;
+    dragCtx.section.style.top = top + "px";
+    const dragCenter = top + dragCtx.section.offsetHeight / 2;
+    const card = document.querySelector(".card");
+    const items = Array.from(card.children).filter(
+      (el) => el.classList.contains("memo-section") && el !== dragCtx.section
+    );
+    let target = null;
+    let insertBefore = true;
+    for (const item of items) {
+      const r = item.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (dragCenter < mid) { target = item; insertBefore = true; break; }
+      target = item; insertBefore = false;
+    }
+    const desiredRef = target ? (insertBefore ? target : target.nextSibling) : null;
+    if (dragCtx.placeholder.nextSibling !== desiredRef) {
+      flip(() => {
+        if (target) card.insertBefore(dragCtx.placeholder, insertBefore ? target : target.nextSibling);
+        else card.appendChild(dragCtx.placeholder);
+      });
+    }
+  }
+  function endDrag(e) {
+    if (!dragCtx) return;
+    if (e && e.pointerId !== dragCtx.pointerId) return;
+    document.removeEventListener("pointermove", onDragMove);
+    document.removeEventListener("pointerup", endDrag);
+    document.removeEventListener("pointercancel", endDrag);
+    const { section, placeholder } = dragCtx;
+    section.parentNode.insertBefore(section, placeholder);
+    placeholder.remove();
+    section.style.position = "";
+    section.style.left = "";
+    section.style.top = "";
+    section.style.width = "";
+    section.classList.remove("dragging");
+    dragCtx = null;
+    saveOrderFromDom();
+  }
   document.querySelectorAll(".memo-section-header").forEach((btn) => {
-    btn.onclick = () => {
-      $(btn.dataset.target).classList.toggle("open");
+    let startX = 0, startY = 0, pendingToggle = false;
+    btn.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      const section = $(btn.dataset.target);
+      if (reorderMode) {
+        pendingToggle = false;
+        startDrag(section, e.pointerId, e.clientY);
+        return;
+      }
+      pendingToggle = true;
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        pendingToggle = false;
+        enterReorderMode();
+        startDrag(section, e.pointerId, e.clientY);
+      }, LONG_PRESS_MS);
+    });
+    btn.addEventListener("pointermove", (e) => {
+      if (!longPressTimer) return;
+      if (Math.abs(e.clientX - startX) > MOVE_CANCEL_PX || Math.abs(e.clientY - startY) > MOVE_CANCEL_PX) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        pendingToggle = false;
+      }
+    });
+    const cancelTap = () => {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      if (pendingToggle && !dragCtx) {
+        $(btn.dataset.target).classList.toggle("open");
+      }
+      pendingToggle = false;
     };
+    btn.addEventListener("pointerup", cancelTap);
+    btn.addEventListener("pointercancel", () => {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      pendingToggle = false;
+    });
   });
+  $("btnReorderDone").onclick = () => {
+    if (dragCtx) endDrag();
+    exitReorderMode();
+  };
   // La section heures creuses est la plus utile en premier : ouverte
   // par défaut, les autres restent repliées pour ne pas noyer la page.
   $("secHeuresCreuses").classList.add("open");
