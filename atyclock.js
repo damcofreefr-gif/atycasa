@@ -145,7 +145,25 @@
       new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(date)
     );
   }
+  // Sur Android, on tente d'ouvrir l'appli calendrier native du téléphone
+  // (via l'intent standard "APP_CALENDAR", pas de nom de paquet en dur —
+  // ça reste l'appli calendrier par défaut du système, Samsung Calendar
+  // sur un Samsung avec les comptes synchronisés) plutôt que Google
+  // Calendar dans le navigateur. `browser_fallback_url` fait retomber sur
+  // CALENDAR_URL si aucune appli ne gère cet intent (ou si l'ouverture
+  // via intent:// échoue) — sur les autres plateformes (iOS, desktop),
+  // pas d'intent Android possible : on garde directement CALENDAR_URL.
+  function isAndroid() {
+    return /Android/i.test(navigator.userAgent || "");
+  }
   function openCalendar() {
+    if (isAndroid()) {
+      const intentUrl =
+        "intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_CALENDAR;" +
+        "S.browser_fallback_url=" + encodeURIComponent(CALENDAR_URL) + ";end";
+      window.open(intentUrl, "_blank");
+      return;
+    }
     window.open(CALENDAR_URL, "_blank");
   }
   function nextDailyOccurrence(hour) {

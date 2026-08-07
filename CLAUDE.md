@@ -119,10 +119,16 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   manuelle, contrairement au premier lancement). Exclu du calcul du
   pulse sur le bouton 🕐 (sinon celui-ci pulserait en permanence pour
   tout le monde et perdrait son sens de "tu as programmé quelque
-  chose"). Bouton "Ouvrir l'agenda" sur la bannière/notif : ouvre
-  Google Calendar (`CALENDAR_URL`, vue du jour) dans un nouvel onglet —
-  choix par défaut faute d'API web universelle pour lancer l'appli de
-  calendrier native du téléphone ; heure (8h) et lien sont volontairement
+  chose"). Bouton "Ouvrir l'agenda" sur la bannière/notif : sur Android,
+  tente d'abord l'appli calendrier native du téléphone via l'intent
+  standard `android.intent.category.APP_CALENDAR` (`isAndroid()`, pas de
+  nom de paquet en dur — ouvre l'appli calendrier par défaut du système,
+  Samsung Calendar sur un Samsung, les comptes étant synchronisés de
+  toute façon), avec repli automatique sur Google Calendar
+  (`S.browser_fallback_url`) si rien ne gère cet intent ; sur les autres
+  plateformes (iOS, desktop), ouvre directement Google Calendar
+  (`CALENDAR_URL`, vue du jour) dans un nouvel onglet, faute d'équivalent
+  d'intent Android. Heure (8h) et lien calendrier sont volontairement
   regroupés dans des constantes en tête de fichier pour être ajustés
   facilement plus tard (ex : rendre l'heure configurable, ou pointer
   vers un autre calendrier).
