@@ -369,6 +369,21 @@
     renderAtyclockPulse();
     renderHousePulse();
   }
+  // Notification via le service worker plutôt que le constructeur
+  // Notification() classique : sur Android, ce dernier est restreint
+  // (lève une erreur "Illegal constructor" dans Chrome, silencieusement
+  // avalée par le catch ci-dessous) — la notif n'atteignait donc jamais
+  // le téléphone hors de l'appli, seule la bannière s'affichait. Même
+  // mécanisme que Boost (`sendBoostNotification`). Le clic est géré par
+  // sw.js ("notificationclick") plutôt que par un onclick JS, seule
+  // façon fiable de router le clic sur ce type de notification.
+  function sendAtyclockNotification(text, tag, data) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.ready
+      .then((reg) => reg.showNotification("Atycasa", { body: text, icon: "icons/icon-192.png", tag, renotify: true, data: data || {} }))
+      .catch(() => {});
+  }
   function notifyDue(d, now) {
     if (d.zoneId === AGENDA_ZONE_MARKER) {
       notifyAgenda();
@@ -398,13 +413,7 @@
       hasZone ? { label: "Arroser", onClick: () => goToProposal(d.zoneId) } : null,
       astate.soundEnabled
     );
-    if ("Notification" in window && Notification.permission === "granted") {
-      try {
-        new Notification("Atycasa", { body: text, icon: "icons/icon-192.png" });
-      } catch (e) {
-        // silencieux : certains contextes n'autorisent pas le constructeur Notification
-      }
-    }
+    sendAtyclockNotification(text, "atyclock-reminder", hasZone ? { zoneId: d.zoneId } : {});
   }
   function ensureNotifPermission() {
     if (!("Notification" in window)) return;
@@ -425,18 +434,7 @@
     const text = `🗓️ ${frenchDayLabel(new Date())} — un coup d'œil à ton agenda ?`;
     vibrate([80, 40, 80]);
     showBanner(text, { label: "Ouvrir l'agenda", onClick: openCalendar }, false);
-    if ("Notification" in window && Notification.permission === "granted") {
-      try {
-        const n = new Notification("Atycasa", { body: text, icon: "icons/icon-192.png" });
-        n.onclick = () => {
-          window.focus();
-          openCalendar();
-          n.close();
-        };
-      } catch (e) {
-        // silencieux : certains contextes n'autorisent pas le constructeur Notification
-      }
-    }
+    sendAtyclockNotification(text, "atyclock-agenda", {});
   }
   function getAgendaReminder() {
     return astate.reminders.find((r) => r.zoneId === AGENDA_ZONE_MARKER) || null;
@@ -519,6 +517,17 @@
       const z = state.zones.find((zz) => zz.id === openZoneId);
       if (z) openProposal(z);
     }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, "", location.pathname);
+    }
+  })();
+
+  // Rouvre le calendrier suite à un clic sur la notification "Ouvrir ton
+  // agenda" — routée par sw.js ("notificationclick") vers cette page avec
+  // ?notifAction=openAgenda, sur le même principe que ?openZone= ci-dessus.
+  (function handleNotifActionParam() {
+    if (params.get("notifAction") !== "openAgenda") return;
+    openCalendar();
     if (window.history && window.history.replaceState) {
       window.history.replaceState({}, "", location.pathname);
     }

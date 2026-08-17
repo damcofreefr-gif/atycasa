@@ -90,7 +90,16 @@ voir la section identique dans leurs CLAUDE.md respectifs.
 - Notifications : la permission navigateur n'est demandée qu'au tout
   premier "Programmer", jamais à l'ouverture de l'app ; si refusée, on ne
   la redemande plus jamais (l'app retombe en mode bannière + vibration
-  uniquement).
+  uniquement). Envoyées via `ServiceWorkerRegistration.showNotification`
+  (`sendAtyclockNotification`, tags `atyclock-reminder`/`atyclock-agenda`)
+  et non via le constructeur `Notification()` classique : sur Android ce
+  dernier est restreint (lève une erreur silencieusement avalée), la
+  notif n'atteignait donc jamais le téléphone hors de l'appli — seule la
+  bannière s'affichait. Même mécanisme que Boost. Clic sur la
+  notification géré par sw.js ("notificationclick") : recharge un onglet
+  déjà ouvert (ou en ouvre un) sur `index.html?openZone=..` (rappel de
+  zone) ou `atyclock.html?notifAction=openAgenda` (rappel agenda, relu
+  au chargement pour rouvrir le calendrier).
 - Alarme sonore (bips générés via Web Audio API, sans fichier audio) au
   déclenchement d'un rappel : désactivée par défaut (soundEnabled:
   false), pour rester peu intrusive en attendant de vraies notifications

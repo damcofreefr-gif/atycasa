@@ -2,7 +2,7 @@
    Avantage : chaque push sur GitHub met l'app à jour dès la prochaine
    ouverture avec connexion, et l'app reste utilisable hors ligne. */
 
-const CACHE = "maison-v66";
+const CACHE = "maison-v67";
 const ASSETS = [
   "./",
   "./index.html",
@@ -50,14 +50,41 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
-// Boost : actions "▶ Je l'ai démarré" / "✅ Je l'ai terminé" sur la
-// notification de rappel. Si un onglet boost.html est déjà ouvert, on
-// lui passe l'action par message (elle applique le changement sans
-// recharger) ; sinon on l'ouvre avec l'action en paramètre d'URL,
-// lue au chargement par boost.js.
 self.addEventListener("notificationclick", (e) => {
-  const action = e.action || "";
+  const n = e.notification;
+  const tag = n.tag || "";
   e.notification.close();
+
+  // Atyclock : rappel de zone ou rappel agenda du matin (voir
+  // sendAtyclockNotification dans atyclock.js). Un onglet déjà ouvert est
+  // rechargé sur la bonne page/paramètre plutôt que de lui poster un
+  // message — plus simple ici, ces clics amènent de toute façon vers un
+  // écran précis (proposition de zone ou calendrier), pas un ajustement
+  // d'état en cours comme pour Boost ci-dessous.
+  if (tag === "atyclock-reminder" || tag === "atyclock-agenda") {
+    const zoneId = n.data && n.data.zoneId;
+    const url =
+      tag === "atyclock-agenda"
+        ? "atyclock.html?notifAction=openAgenda"
+        : zoneId
+        ? "index.html?openZone=" + encodeURIComponent(zoneId)
+        : "index.html";
+    e.waitUntil(
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+        const client = list[0];
+        if (client && "navigate" in client) return client.navigate(url).then((c) => c.focus());
+        if (self.clients.openWindow) return self.clients.openWindow(url);
+      })
+    );
+    return;
+  }
+
+  // Boost : actions "▶ Je l'ai démarré" / "✅ Je l'ai terminé" sur la
+  // notification de rappel. Si un onglet boost.html est déjà ouvert, on
+  // lui passe l'action par message (elle applique le changement sans
+  // recharger) ; sinon on l'ouvre avec l'action en paramètre d'URL,
+  // lue au chargement par boost.js.
+  const action = e.action || "";
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const client of list) {
