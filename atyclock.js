@@ -36,6 +36,14 @@
   const AGENDA_HOUR = 8;
   const CALENDAR_URL = "https://calendar.google.com/calendar/r/day";
 
+  // Agenda du jour (Google Calendar) : relances répétées sur les
+  // événements choisis, jusqu'à confirmation que c'est fait — voir
+  // google-config.js pour la marche à suivre. Lecture seule
+  // (calendar.readonly) : Atycasa ne modifie jamais ton agenda.
+  const GOOGLE_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
+  const GIS_CDN_URL = "https://accounts.google.com/gsi/client";
+  const AGENDA_MAX_REMINDERS = 3;
+
   const params = new URLSearchParams(location.search);
   const ctxZoneId = params.get("zone");
   const ctxZoneName = params.get("name");
@@ -197,13 +205,22 @@
           // pour les états enregistrés avant l'ajout de ce champ.
           if (typeof d.soundEnabled !== "boolean") d.soundEnabled = false;
           if (typeof d.agendaSeeded !== "boolean") d.agendaSeeded = false;
+          if (typeof d.googleConnected !== "boolean") d.googleConnected = false;
+          if (typeof d.googleCalendarId !== "string") d.googleCalendarId = null;
+          if (typeof d.googleCalendarLabel !== "string") d.googleCalendarLabel = null;
+          if (!Array.isArray(d.agendaItems)) d.agendaItems = [];
+          if (typeof d.agendaReminderIntervalMin !== "number") d.agendaReminderIntervalMin = 30;
           return d;
         }
       }
     } catch (e) {
       console.error("Atyclock : chargement impossible", e);
     }
-    return { reminders: [], notifAsked: false, soundEnabled: false, agendaSeeded: false };
+    return {
+      reminders: [], notifAsked: false, soundEnabled: false, agendaSeeded: false,
+      googleConnected: false, googleCalendarId: null, googleCalendarLabel: null,
+      agendaItems: [], agendaReminderIntervalMin: 30,
+    };
   }
   function saveAtyclockState() {
     try {
@@ -481,11 +498,86 @@
     el.classList.toggle("on", !!getAgendaReminder());
   }
 
+  // ---------- Agenda du jour : moteur de relance (toutes les pages) ----------
+  // La connexion Google + la liste des événements ne vivent que sur
+  // atyclock.html (voir plus bas), mais le "tick" qui déclenche les
+  // relances doit tourner partout, comme les autres rappels — il ne
+  // dépend que des événements déjà mis en cache dans astate.agendaItems
+  // (aucun appel réseau à Google nécessaire pour cocher l'heure).
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  // Les événements d'hier n'ont plus de sens ("aujourd'hui" se
+  // réinitialise chaque jour) — on les laisse tomber silencieusement,
+  // jamais présentés comme des rappels manqués.
+  function pruneStaleAgendaItems() {
+    const tk = todayKey();
+    const before = astate.agendaItems.length;
+    astate.agendaItems = astate.agendaItems.filter((it) => it.dayKey === tk);
+    if (astate.agendaItems.length !== before) saveAtyclockState();
+  }
+  function notifyAgendaItem(item) {
+    const text = `🗓️ ${item.title} — c'est fait ?`;
+    vibrate([80, 40, 80]);
+    showBanner(text, { label: "✅ C'est fait", onClick: () => markAgendaItemDone(item.id) }, false);
+    if (!("Notification" in window) || Notification.permission !== "granted" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.ready
+      .then((reg) =>
+        reg.showNotification("Atycasa", {
+          body: text,
+          icon: "icons/icon-192.png",
+          tag: "atyclock-agenda-item-" + item.id,
+          renotify: true,
+          data: { itemId: item.id },
+          actions: [{ action: "done", title: "✅ C'est fait" }],
+        })
+      )
+      .catch(() => {});
+  }
+  // Marque un événement "fait" (arrête ses relances). Réversible en
+  // retapant dessus dans la liste — jamais de cul-de-sac.
+  function markAgendaItemDone(id) {
+    const item = astate.agendaItems.find((it) => it.id === id);
+    if (!item) return;
+    item.done = true;
+    item.active = false;
+    saveAtyclockState();
+    if (onAtyclockPage && typeof renderGcalEvents === "function") renderGcalEvents();
+  }
+  function checkAgendaReminders() {
+    if (!astate.agendaItems || !astate.agendaItems.length) return;
+    pruneStaleAgendaItems();
+    const now = Date.now();
+    const intervalMs = (astate.agendaReminderIntervalMin || 30) * 60000;
+    let dirty = false;
+    astate.agendaItems.forEach((item) => {
+      if (!item.active || item.done || item.dormant) return;
+      const startTs = Date.parse(item.startISO);
+      if (isNaN(startTs) || startTs > now) return;
+      if (item.lastReminderAt && now - item.lastReminderAt < intervalMs) return;
+      if ((item.remindCount || 0) >= AGENDA_MAX_REMINDERS) {
+        item.dormant = true;
+        dirty = true;
+        return;
+      }
+      item.remindCount = (item.remindCount || 0) + 1;
+      item.lastReminderAt = now;
+      dirty = true;
+      notifyAgendaItem(item);
+    });
+    if (dirty) saveAtyclockState();
+  }
+
   // ---------- Init partagée (toutes les pages) ----------
   injectBannerStyle();
   seedAgendaReminder();
   checkReminders();
-  setInterval(checkReminders, CHECK_INTERVAL_MS);
+  checkAgendaReminders();
+  setInterval(() => {
+    checkReminders();
+    checkAgendaReminders();
+  }, CHECK_INTERVAL_MS);
 
   const launchBtn = $("btnAtyclock");
   if (launchBtn) launchBtn.onclick = () => { location.href = "atyclock.html"; };
@@ -532,6 +624,29 @@
       window.history.replaceState({}, "", location.pathname);
     }
   })();
+
+  // Marque un événement "fait" suite à l'action "✅ C'est fait" tapée
+  // directement sur la notification — routée par sw.js vers
+  // ?notifAction=agendaDone&itemId=.. quand aucun onglet n'était ouvert
+  // (sinon, cf. plus bas, le message postMessage suffit sans reload).
+  (function handleAgendaDoneParam() {
+    if (params.get("notifAction") !== "agendaDone") return;
+    const itemId = params.get("itemId");
+    if (itemId) markAgendaItemDone(itemId);
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, "", location.pathname);
+    }
+  })();
+
+  // Même action, reçue par message quand un onglet était déjà ouvert
+  // (cf. sw.js "notificationclick") — pas de reload nécessaire ici.
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (e) => {
+      if (e.data && e.data.type === "atyclock-agenda-action" && e.data.action === "done" && e.data.itemId) {
+        markAgendaItemDone(e.data.itemId);
+      }
+    });
+  }
 
   // ---------- Interface du minuteur (atyclock.html uniquement) ----------
   if (!onAtyclockPage) return;
@@ -755,11 +870,307 @@
     btn.addEventListener("pointercancel", clear);
   }
 
+  // ---------- Agenda du jour (Google Calendar) — atyclock.html uniquement ----------
+  // Section repliée par défaut (aucun appel réseau tant qu'elle n'est pas
+  // ouverte) : le moteur de relance lui-même (checkAgendaReminders, plus
+  // haut, partagé toutes pages) ne dépend que des événements déjà mis en
+  // cache dans astate.agendaItems, jamais d'un jeton Google valide en
+  // permanence.
+  function googleConfigured() {
+    return typeof GOOGLE_CONFIG !== "undefined" && GOOGLE_CONFIG.clientId && GOOGLE_CONFIG.clientId.indexOf("REMPLACE") === -1;
+  }
+  let googleAccessToken = null;
+  let googleTokenExpiry = 0;
+  let googleTokenClient = null;
+  let gisLoadPromise = null;
+  let gcalCalendars = [];
+
+  function loadGis() {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) return Promise.resolve();
+    if (gisLoadPromise) return gisLoadPromise;
+    gisLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = GIS_CDN_URL;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error("Chargement Google impossible"));
+      document.head.appendChild(script);
+    });
+    return gisLoadPromise;
+  }
+  function ensureTokenClient() {
+    return loadGis().then(() => {
+      if (!googleTokenClient) {
+        googleTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CONFIG.clientId,
+          scope: GOOGLE_SCOPE,
+          callback: () => {},
+        });
+      }
+    });
+  }
+  // Enveloppe en promesse l'API par callback de Google Identity Services :
+  // le client est réutilisé, on réassigne juste callback/error_callback
+  // avant chaque appel.
+  function requestGoogleToken(promptMode) {
+    return new Promise((resolve, reject) => {
+      googleTokenClient.callback = (resp) => {
+        if (resp && resp.access_token) resolve(resp);
+        else reject(new Error((resp && resp.error) || "Connexion refusée"));
+      };
+      googleTokenClient.error_callback = (err) => reject(new Error((err && err.type) || "Connexion impossible"));
+      try {
+        googleTokenClient.requestAccessToken(promptMode !== undefined ? { prompt: promptMode } : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+  // prompt:"" = tentative silencieuse (aucune UI, ne peut donc pas être
+  // bloquée comme une popup) — utilisée pour rafraîchir un jeton expiré
+  // sans redemander le consentement à chaque réouverture de la section.
+  function ensureGoogleToken(promptMode) {
+    if (googleAccessToken && Date.now() < googleTokenExpiry - 60000) return Promise.resolve();
+    return ensureTokenClient()
+      .then(() => requestGoogleToken(promptMode))
+      .then((resp) => {
+        googleAccessToken = resp.access_token;
+        googleTokenExpiry = Date.now() + (resp.expires_in || 3600) * 1000;
+      });
+  }
+  function gcalFetch(url) {
+    return fetch(url, { headers: { Authorization: "Bearer " + googleAccessToken } }).then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    });
+  }
+  function fetchCalendarList() {
+    return gcalFetch("https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader");
+  }
+  function fetchTodayEvents(calendarId) {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const qs = new URLSearchParams({
+      timeMin: startOfDay.toISOString(),
+      timeMax: endOfDay.toISOString(),
+      singleEvents: "true",
+      orderBy: "startTime",
+    });
+    return gcalFetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(calendarId) + "/events?" + qs.toString());
+  }
+
+  function setGcalStatus(text) {
+    [$("gcalStatus"), $("gcalStatus2")].forEach((el) => {
+      if (!el) return;
+      el.textContent = text;
+      el.classList.toggle("hidden", !text);
+    });
+  }
+  function renderGcalPanels() {
+    const configured = googleConfigured();
+    $("gcalNotConfigured").classList.toggle("hidden", configured);
+    $("gcalConnect").classList.toggle("hidden", !configured || astate.googleConnected);
+    $("gcalConnected").classList.toggle("hidden", !configured || !astate.googleConnected);
+  }
+  function renderCalendarSelect() {
+    const sel = $("gcalCalendarSelect");
+    sel.innerHTML = "";
+    gcalCalendars.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.summary + (c.primary ? " (principal)" : "");
+      if (c.id === astate.googleCalendarId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+  function renderIntervalPills() {
+    [15, 30, 60].forEach((m) => {
+      const el = $("gcalPill" + m);
+      if (el) el.classList.toggle("on", astate.agendaReminderIntervalMin === m);
+    });
+  }
+  function renderGcalEvents() {
+    const tk = todayKey();
+    const items = astate.agendaItems
+      .filter((it) => it.dayKey === tk)
+      .sort((a, b) => Date.parse(a.startISO) - Date.parse(b.startISO));
+    const wrap = $("gcalEventsList");
+    wrap.innerHTML = "";
+    $("gcalEmpty").classList.toggle("hidden", items.length > 0);
+    items.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "gcal-event" + (item.done ? " done" : "");
+      const text = document.createElement("div");
+      text.className = "gcal-event-text";
+      const time = document.createElement("div");
+      time.className = "gcal-event-time";
+      time.textContent = formatClock(new Date(item.startISO));
+      const title = document.createElement("div");
+      title.className = "gcal-event-title";
+      title.textContent = item.title;
+      text.appendChild(time);
+      text.appendChild(title);
+      row.appendChild(text);
+      if (item.done) {
+        const badge = document.createElement("button");
+        badge.className = "gcal-done-badge";
+        badge.textContent = "✅ Fait";
+        badge.setAttribute("aria-label", "Annuler, remettre en attente");
+        badge.onclick = () => {
+          item.done = false;
+          saveAtyclockState();
+          renderGcalEvents();
+        };
+        row.appendChild(badge);
+      } else {
+        const bell = document.createElement("button");
+        bell.className = "gcal-bell" + (item.active ? " on" : "");
+        bell.textContent = "🔔";
+        bell.setAttribute("aria-label", item.active ? "Ne plus me relancer sur cet événement" : "Me relancer jusqu'à confirmation");
+        bell.onclick = () => {
+          item.active = !item.active;
+          if (item.active) {
+            item.dormant = false;
+            item.remindCount = 0;
+            ensureNotifPermission();
+          }
+          saveAtyclockState();
+          vibrate(20);
+          renderGcalEvents();
+        };
+        row.appendChild(bell);
+      }
+      wrap.appendChild(row);
+    });
+  }
+  // Rouvrir la liste réarme les événements mis en veille (3 relances
+  // sans réaction) — même principe que Boost quand on revient sur sa page.
+  function rearmDormantAgendaItems() {
+    let dirty = false;
+    astate.agendaItems.forEach((item) => {
+      if (item.dormant) {
+        item.dormant = false;
+        item.remindCount = 0;
+        dirty = true;
+      }
+    });
+    if (dirty) saveAtyclockState();
+  }
+  function refreshTodayEvents() {
+    if (!astate.googleCalendarId) return Promise.resolve();
+    setGcalStatus("Chargement des événements…");
+    return fetchTodayEvents(astate.googleCalendarId)
+      .then((data) => {
+        const tk = todayKey();
+        const timed = (data.items || []).filter((ev) => ev.start && ev.start.dateTime && ev.status !== "cancelled");
+        const known = new Map(astate.agendaItems.filter((it) => it.dayKey === tk).map((it) => [it.eventId, it]));
+        astate.agendaItems = timed.map((ev) => {
+          const prev = known.get(ev.id);
+          return {
+            id: (prev && prev.id) || uid(),
+            eventId: ev.id,
+            title: ev.summary || "(sans titre)",
+            startISO: ev.start.dateTime,
+            dayKey: tk,
+            active: prev ? prev.active : false,
+            remindCount: prev ? prev.remindCount : 0,
+            dormant: prev ? prev.dormant : false,
+            lastReminderAt: prev ? prev.lastReminderAt : null,
+            done: prev ? prev.done : false,
+          };
+        });
+        saveAtyclockState();
+        setGcalStatus("");
+        renderGcalEvents();
+      })
+      .catch(() => {
+        setGcalStatus("Impossible de charger les événements — réessaie plus tard.");
+      });
+  }
+  function loadCalendarsAndEvents() {
+    return fetchCalendarList()
+      .then((data) => {
+        gcalCalendars = (data.items || []).filter((c) => c.accessRole !== "freeBusyReader");
+        if (!astate.googleCalendarId || !gcalCalendars.some((c) => c.id === astate.googleCalendarId)) {
+          const chosen = gcalCalendars.find((c) => c.primary) || gcalCalendars[0];
+          if (chosen) {
+            astate.googleCalendarId = chosen.id;
+            astate.googleCalendarLabel = chosen.summary;
+            saveAtyclockState();
+          }
+        }
+        renderCalendarSelect();
+        return refreshTodayEvents();
+      })
+      .catch(() => {
+        setGcalStatus("Impossible de charger tes agendas — réessaie plus tard.");
+      });
+  }
+  function connectGoogle() {
+    if (!googleConfigured()) return;
+    setGcalStatus("Connexion en cours…");
+    ensureTokenClient()
+      .then(() => requestGoogleToken(undefined))
+      .then((resp) => {
+        googleAccessToken = resp.access_token;
+        googleTokenExpiry = Date.now() + (resp.expires_in || 3600) * 1000;
+        astate.googleConnected = true;
+        saveAtyclockState();
+        setGcalStatus("");
+        renderGcalPanels();
+        return loadCalendarsAndEvents();
+      })
+      .catch(() => {
+        setGcalStatus("Connexion impossible — réessaie.");
+      });
+  }
+  function disconnectGoogle() {
+    const token = googleAccessToken;
+    astate.googleConnected = false;
+    astate.googleCalendarId = null;
+    astate.googleCalendarLabel = null;
+    astate.agendaItems = [];
+    saveAtyclockState();
+    googleAccessToken = null;
+    googleTokenExpiry = 0;
+    if (token && window.google && window.google.accounts && window.google.accounts.oauth2) {
+      try {
+        google.accounts.oauth2.revoke(token, () => {});
+      } catch (e) {
+        // silencieux
+      }
+    }
+    renderGcalPanels();
+  }
+  function openGcalSection() {
+    if (!astate.googleConnected) return;
+    rearmDormantAgendaItems();
+    renderGcalEvents();
+    ensureGoogleToken("")
+      .then(refreshTodayEvents)
+      .catch(() => {
+        setGcalStatus("Reconnexion silencieuse impossible — déconnecte puis reconnecte-toi si la liste ne se met plus à jour.");
+      });
+  }
+  function toggleGcalSection() {
+    const header = $("gcalHeader");
+    const body = $("gcalBody");
+    const opening = body.classList.contains("hidden");
+    body.classList.toggle("hidden");
+    header.classList.toggle("open", opening);
+    if (!opening) return;
+    renderGcalPanels();
+    renderIntervalPills();
+    if (astate.googleConnected) openGcalSection();
+  }
+
   renderZoneContext();
   renderNow();
   renderTarget();
   renderSoundToggle();
   renderAgendaToggle();
+  renderGcalPanels();
+  renderIntervalPills();
   setInterval(() => {
     renderNow();
     renderTarget();
@@ -771,6 +1182,27 @@
   $("btnCancel").onclick = cancelReminder;
   $("btnBack").onclick = () => { location.href = "index.html"; };
   $("agendaToggle").onclick = toggleAgendaReminder;
+  $("gcalHeader").onclick = toggleGcalSection;
+  $("btnGcalConnect").onclick = connectGoogle;
+  $("btnGcalDisconnect").onclick = disconnectGoogle;
+  $("gcalCalendarSelect").onchange = () => {
+    const sel = $("gcalCalendarSelect");
+    const chosen = gcalCalendars.find((c) => c.id === sel.value);
+    astate.googleCalendarId = sel.value;
+    astate.googleCalendarLabel = chosen ? chosen.summary : null;
+    saveAtyclockState();
+    refreshTodayEvents();
+  };
+  [15, 30, 60].forEach((m) => {
+    const el = $("gcalPill" + m);
+    if (el) {
+      el.onclick = () => {
+        astate.agendaReminderIntervalMin = m;
+        saveAtyclockState();
+        renderIntervalPills();
+      };
+    }
+  });
   bindProgramButton();
   bindStatusRow();
   bindSoundButton();

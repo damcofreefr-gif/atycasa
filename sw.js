@@ -2,7 +2,7 @@
    Avantage : chaque push sur GitHub met l'app à jour dès la prochaine
    ouverture avec connexion, et l'app reste utilisable hors ligne. */
 
-const CACHE = "maison-v67";
+const CACHE = "maison-v68";
 const ASSETS = [
   "./",
   "./index.html",
@@ -18,6 +18,7 @@ const ASSETS = [
   "./atymemo.html",
   "./atymemo.js",
   "./firebase-config.js",
+  "./google-config.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -74,6 +75,32 @@ self.addEventListener("notificationclick", (e) => {
         const client = list[0];
         if (client && "navigate" in client) return client.navigate(url).then((c) => c.focus());
         if (self.clients.openWindow) return self.clients.openWindow(url);
+      })
+    );
+    return;
+  }
+
+  // Atyclock : relance sur un événement d'agenda choisi ("🔔 Me
+  // relancer") — action "✅ C'est fait" sur la notification. Même
+  // principe que Boost ci-dessous : message à un onglet déjà ouvert
+  // (pas de reload, l'état s'applique directement), sinon ouverture
+  // avec l'action en paramètre d'URL, lue par atyclock.js au chargement.
+  if (tag.indexOf("atyclock-agenda-item-") === 0) {
+    const itemId = (n.data && n.data.itemId) || "";
+    const action = e.action || "";
+    e.waitUntil(
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+        for (const client of list) {
+          if ("focus" in client) {
+            if (action) client.postMessage({ type: "atyclock-agenda-action", action, itemId });
+            return client.focus();
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(
+            "atyclock.html" + (action ? "?notifAction=agendaDone&itemId=" + encodeURIComponent(itemId) : "")
+          );
+        }
       })
     );
     return;

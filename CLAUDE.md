@@ -141,6 +141,73 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   regroupés dans des constantes en tête de fichier pour être ajustés
   facilement plus tard (ex : rendre l'heure configurable, ou pointer
   vers un autre calendrier).
+- Agenda du jour (Google Calendar) : section repliable "📅 Agenda du
+  jour (Google)" sous le rappel agenda du matin, sur atyclock.html
+  uniquement. Contrairement au rappel du matin (qui ne fait qu'ouvrir
+  le calendrier), celle-ci lit vraiment les événements du jour pour
+  permettre des relances répétées jusqu'à confirmation — demandé
+  explicitement par l'utilisateur, qui voulait au départ lire l'agenda
+  natif du téléphone (Samsung Calendar) : **impossible depuis une PWA**
+  (aucun navigateur n'expose l'agenda natif du téléphone à une page
+  web), d'où le choix validé avec lui de lire Google Calendar à la
+  place — Samsung Calendar y étant synchronisé, ça revient en pratique
+  au même. Portée volontairement opt-in (pas de relance automatique
+  sur tous les événements, pour ne pas noyer l'utilisateur sous des
+  notifs sur des entrées de calendrier sans importance — décision
+  explicite de l'utilisateur, contraire au comportement par défaut
+  suggéré).
+  - Connexion : OAuth via Google Identity Services (GIS), chargée à la
+    demande uniquement à l'ouverture de la section (jamais au chargement
+    de la page). Configuration dans `google-config.js` (`GOOGLE_CONFIG.
+    clientId`, marche à suivre en tête de ce fichier — un projet Google
+    Cloud à créer une fois, même esprit que firebase-config.js pour
+    Atynote) ; tant qu'il garde sa valeur REMPLACE_MOI, la section
+    affiche un état "non configuré" au lieu de planter
+    (`googleConfigured()`). Scope lecture seule
+    (`calendar.readonly`) — Atycasa ne modifie jamais l'agenda.
+    Jeton d'accès gardé en mémoire seulement (jamais dans localStorage) ;
+    à la réouverture de la section, tentative de reconnexion silencieuse
+    (`prompt: ""`, sans UI donc jamais bloquée comme une popup) plutôt
+    que redemander le consentement à chaque fois — si elle échoue,
+    message neutre invitant à se déconnecter/reconnecter, la liste déjà
+    en cache reste utilisable entre-temps.
+  - Sélection de l'agenda à utiliser parmi ceux du compte connecté
+    (`gcalCalendarSelect`, rempli via l'API `calendarList`) — répond à
+    la demande explicite de pouvoir choisir l'agenda, agenda principal
+    présélectionné par défaut.
+  - Liste des événements horodatés du jour (les événements "journée
+    entière" et annulés sont exclus, cf. filtre sur `ev.start.dateTime`
+    et `ev.status`). Bouton 🔔 par événement (même logique que "Me le
+    rappeler" sur une zone) : seuls les événements activés sont
+    relancés — jamais une relance automatique sur tout l'agenda.
+  - Moteur de relance identique à Boost : intervalle choisi parmi
+    15/30/60 min (`agendaReminderIntervalMin`, réglage global), relance
+    dès que l'heure de l'événement est passée puis toutes les X minutes
+    tant que non confirmé, mise en veille automatique après 3 relances
+    sans réaction (`AGENDA_MAX_REMINDERS`) — réarmée en rouvrant la
+    section, jamais présentée comme un échec. "✅ Fait" (bouton sur la
+    notification, ou dans la liste) arrête les relances ; réversible en
+    retapant sur le badge "✅ Fait" affiché à la place de la cloche.
+    Fonctionne "hors ligne" pour le tick lui-même : `checkAgendaReminders`
+    (partagé, toutes pages, comme les autres moteurs de rappel) ne
+    dépend que des événements déjà mis en cache dans
+    `astate.agendaItems`, jamais d'un jeton Google valide en
+    permanence — seule l'ouverture de la section pour rafraîchir la
+    liste a besoin d'un jeton.
+  - Clic sur la notification géré par sw.js (tag
+    `atyclock-agenda-item-<id>`, action `done`) : message à un onglet
+    déjà ouvert (état appliqué sans recharger, comme Boost) ou ouverture
+    avec `atyclock.html?notifAction=agendaDone&itemId=..` sinon.
+  - Les événements du jour se réinitialisent chaque jour
+    (`dayKey`, `pruneStaleAgendaItems`) — silencieusement, jamais
+    présenté comme des rappels manqués. "Déconnecter mon agenda Google"
+    (révocation du jeton via `google.accounts.oauth2.revoke`, vide
+    `agendaItems`/`googleCalendarId`) toujours disponible, sans
+    confirmation dramatique.
+  - Données ajoutées à `atyclock-v1` : `googleConnected`,
+    `googleCalendarId`, `googleCalendarLabel`, `agendaReminderIntervalMin`,
+    `agendaItems: [{id, eventId, title, startISO, dayKey, active,
+    remindCount, dormant, lastReminderAt, done}]`.
 
 ## Atygo (déblocage / démarrage d'action)
 - Bouton 🪄 dans l'en-tête d'Atycasa (à gauche du bouton 🕐). Rôle :
