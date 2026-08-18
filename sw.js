@@ -2,7 +2,7 @@
    Avantage : chaque push sur GitHub met l'app à jour dès la prochaine
    ouverture avec connexion, et l'app reste utilisable hors ligne. */
 
-const CACHE = "maison-v68";
+const CACHE = "maison-v69";
 const ASSETS = [
   "./",
   "./index.html",
@@ -17,6 +17,8 @@ const ASSETS = [
   "./boost.js",
   "./atymemo.html",
   "./atymemo.js",
+  "./atygratitude.html",
+  "./atygratitude.js",
   "./firebase-config.js",
   "./google-config.js",
   "./manifest.webmanifest",
@@ -101,6 +103,19 @@ self.addEventListener("notificationclick", (e) => {
             "atyclock.html" + (action ? "?notifAction=agendaDone&itemId=" + encodeURIComponent(itemId) : "")
           );
         }
+      })
+    );
+    return;
+  }
+
+  // Atygratitude : rappel quotidien du 3+3 (un seul par jour, pas
+  // d'action sur la notification, juste ouvrir la page).
+  if (tag === "atygratitude-reminder") {
+    e.waitUntil(
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+        const client = list[0];
+        if (client && "navigate" in client) return client.navigate("atygratitude.html").then((c) => c.focus());
+        if (self.clients.openWindow) return self.clients.openWindow("atygratitude.html");
       })
     );
     return;

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#16130F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Atygratitude · Atycasa</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg1: #16130F;
+      --bg2: #221C15;
+      --surface: rgba(255,255,255,0.05);
+      --surface2: #241E17;
+      --text: #EAF4F0;
+      --accent: #5BE3A9;
+      --accent-dark: #16130F;
+      --border: rgba(255,255,255,0.12);
+    }
+    * {
+      box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
+      -ms-user-select: none; user-select: none;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
+    body {
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+      padding: max(14px, env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    input, textarea { font-family: inherit; user-select: text; -webkit-user-select: text; }
+    .hidden { display: none !important; }
+
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .back-btn { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 10px; padding: 8px 12px; font-size: 16px; }
+    .h-title { flex: 1; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+
+    .card {
+      background: var(--surface2); border-radius: 20px; padding: 16px 18px;
+      width: 100%; max-width: 440px; margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .intro { font-size: 13px; opacity: 0.6; text-align: center; margin-bottom: 14px; line-height: 1.5; }
+
+    /* ---------- Sections repliables (technique, historique) ---------- */
+    .g-section { background: var(--surface); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+    .g-section-header {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 13px 14px; background: transparent; border: none; color: var(--text);
+      font-size: 14px; font-weight: 700; text-align: left;
+    }
+    .g-section-header .chev { margin-left: auto; opacity: 0.5; transition: transform 0.2s; font-size: 13px; }
+    .g-section.open .g-section-header .chev { transform: rotate(90deg); }
+    .g-section-body { display: none; padding: 0 14px 14px; }
+    .g-section.open .g-section-body { display: block; }
+    .g-tech-text { font-size: 13px; line-height: 1.6; opacity: 0.9; }
+    .g-tech-caveat {
+      font-size: 11.5px; opacity: 0.7; line-height: 1.5; margin-top: 10px;
+      padding: 8px 10px; border-radius: 10px; background: rgba(232,192,91,0.1); border: 1px solid rgba(232,192,91,0.3);
+    }
+
+    /* ---------- Entrée du jour ---------- */
+    .g-today-card {
+      background: var(--surface); border-radius: 14px; padding: 14px; margin-bottom: 12px;
+    }
+    .g-today-date { font-size: 12px; opacity: 0.6; text-transform: capitalize; margin-bottom: 10px; }
+    .g-group { margin-bottom: 14px; }
+    .g-group:last-child { margin-bottom: 0; }
+    .g-group-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .g-group-title.gratitude { color: var(--accent); }
+    .g-group-title.proud { color: #E8C05B; }
+    .g-line-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .g-line-row:last-child { margin-bottom: 0; }
+    .g-line-num { font-size: 12px; opacity: 0.45; width: 14px; flex-shrink: 0; text-align: center; }
+    .g-line-row input {
+      flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg1); color: var(--text); font-size: 13.5px;
+    }
+
+    /* ---------- Rappel ---------- */
+    .g-notif-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-top: 4px;
+    }
+    .g-notif-text { font-size: 13px; line-height: 1.4; }
+    .g-notif-hint { opacity: 0.6; font-size: 11.5px; margin-top: 2px; }
+    .g-time-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .g-time-row input[type="time"] {
+      padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg1); color: var(--text); font-size: 14px;
+    }
+    .switch {
+      position: relative; width: 48px; height: 28px; border-radius: 999px;
+      background: rgba(255,255,255,0.12); border: none; flex-shrink: 0;
+    }
+    .switch::after {
+      content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+      border-radius: 999px; background: #8a8f8c; transition: transform 0.2s, background 0.2s;
+    }
+    .switch.on { background: rgba(91,227,169,0.25); }
+    .switch.on::after { background: var(--accent); transform: translateX(20px); }
+
+    /* ---------- Historique ---------- */
+    .g-entry { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .g-entry:last-child { border-bottom: none; }
+    .g-entry-date { font-size: 12px; font-weight: 700; opacity: 0.75; text-transform: capitalize; margin-bottom: 5px; }
+    .g-entry-line { font-size: 13px; line-height: 1.5; opacity: 0.9; }
+    .g-entry-line.gratitude::before { content: "🌱 "; }
+    .g-entry-line.proud::before { content: "✅ "; }
+    .g-empty { font-size: 12.5px; opacity: 0.55; text-align: center; padding: 10px 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡</button>
+    <div class="h-title">🙏 Atygratitude</div>
+  </div>
+
+  <div class="card">
+    <div class="intro">Ton 3+3 du jour — quelques lignes suffisent, rien à réussir.</div>
+
+    <div class="g-section" id="secTechnique">
+      <button class="g-section-header" data-target="secTechnique">ℹ️ La technique du 3+3<span class="chev">▸</span></button>
+      <div class="g-section-body">
+        <div class="g-tech-text" id="techText"></div>
+        <div class="g-tech-caveat" id="techCaveat"></div>
+      </div>
+    </div>
+
+    <div class="g-today-card">
+      <div class="g-today-date" id="todayDate"></div>
+      <div class="g-group">
+        <div class="g-group-title gratitude">🌱 3 choses pour lesquelles je suis reconnaissant·e</div>
+        <div class="g-line-row"><span class="g-line-num">1</span><input type="text" maxlength="140" data-section="gratitude" data-idx="0"></div>
+        <div class="g-line-row"><span class="g-line-num">2</span><input type="text" maxlength="140" data-section="gratitude" data-idx="1"></div>
+        <div class="g-line-row"><span class="g-line-num">3</span><input type="text" maxlength="140" data-section="gratitude" data-idx="2"></div>
+      </div>
+      <div class="g-group">
+        <div class="g-group-title proud">✅ 3 choses que j'ai bien faites</div>
+        <div class="g-line-row"><span class="g-line-num">1</span><input type="text" maxlength="140" data-section="proud" data-idx="0"></div>
+        <div class="g-line-row"><span class="g-line-num">2</span><input type="text" maxlength="140" data-section="proud" data-idx="1"></div>
+        <div class="g-line-row"><span class="g-line-num">3</span><input type="text" maxlength="140" data-section="proud" data-idx="2"></div>
+      </div>
+    </div>
+
+    <div class="g-today-card">
+      <div class="g-notif-row">
+        <div class="g-notif-text">
+          <div>🔔 Rappel quotidien</div>
+          <div class="g-notif-hint">Une notif à l'heure choisie pour prendre un instant.</div>
+        </div>
+        <button class="switch" id="gratNotifToggle" aria-label="Rappel quotidien du 3+3"></button>
+      </div>
+      <div class="g-time-row">
+        <input type="time" id="gratTime" value="20:00">
+      </div>
+    </div>
+
+    <div class="g-section" id="secHistorique">
+      <button class="g-section-header" data-target="secHistorique">📖 Journal (historique)<span class="chev">▸</span></button>
+      <div class="g-section-body">
+        <div id="histList"></div>
+        <div class="g-empty hidden" id="histEmpty">Rien pour l'instant — ton premier 3+3 apparaîtra ici.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="atygratitude.js"></script>
+</body>
+</html>

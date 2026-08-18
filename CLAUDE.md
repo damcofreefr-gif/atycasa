@@ -576,6 +576,49 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   pneus: {av: {marque, modele, dimension, km}, ar: {marque, modele,
   dimension, km}}}], ordreSections}.
 
+## Atygratitude (journal de gratitude "3+3")
+- Bouton 🙏 dans l'en-tête d'Atycasa (à droite du bouton 🧭). Rôle :
+  journal quotidien de gratitude selon la technique du "3+3", demandée
+  explicitement par l'utilisateur ("basé sur la technique du 3+3 de
+  Fernando Mora"). Page autonome (atygratitude.html + atygratitude.js,
+  mêmes contraintes vanilla que le reste), aucun lien de données avec
+  le reste de l'app — seule exception : atygratitude.js tourne aussi
+  (léger) sur index.html pour que le rappel quotidien continue de
+  fonctionner en arrière-plan.
+- Descriptif de la technique et de son auteur (section repliable "ℹ️ La
+  technique du 3+3", repliée par défaut) : texte reconstitué de mémoire
+  par Claude, **non vérifié auprès d'une source précise** — un
+  bandeau ⚠️ visible dans l'appli le signale explicitement (choix
+  assumé avec l'utilisateur plutôt que d'inventer des détails sûrs sur
+  un vrai auteur). À corriger dans `TECH_TEXT`/`TECH_CAVEAT` en tête de
+  la section "Interface" d'atygratitude.js si une source plus exacte
+  est trouvée.
+- Entrée du jour : 3 champs "🌱 reconnaissant·e" + 3 champs "✅ bien
+  fait", auto-sauvegardés sur `input` comme le reste de l'app. Aucune
+  case n'est obligatoire — une seule ligne remplie suffit à créer
+  l'entrée du jour ("toute session compte"), et l'entrée n'est créée
+  dans `entries` qu'à la première frappe (jamais une ligne vide
+  poussée d'avance). Un jour sans aucune ligne remplie ne laisse
+  aucune trace ni aucun manque affiché — cohérent avec la règle
+  anti-dette du projet.
+- Rappel quotidien : un seul rappel par jour, à l'heure choisie
+  (`<input type="time">`, interrupteur dédié) — pas de relance en
+  boucle comme Boost/l'agenda Google, volontairement : c'est une
+  invitation calme à un instant de recul, pas une tâche à cocher.
+  Se réarme tout seul le lendemain (`lastReminderDayKey`) ; un jour
+  sans réaction n'est jamais rattrapé ni présenté comme un échec.
+  Notification via `ServiceWorkerRegistration.showNotification`
+  (même raison qu'Atyclock : le constructeur `Notification()` classique
+  est peu fiable sur Android), clic géré par sw.js (tag
+  `atygratitude-reminder`) qui rouvre directement la page.
+- Historique ("📖 Journal", section repliable) : liste chronologique
+  inversée des entrées passées (aujourd'hui exclu, déjà visible dans le
+  formulaire du haut), les jours entièrement vides sont filtrés à
+  l'affichage plutôt que supprimés du stockage.
+- Données : localStorage clé "atygratitude-v1", {entries: [{dayKey,
+  gratitude: [str, str, str], proud: [str, str, str], updatedAt}],
+  reminderEnabled, reminderTime, lastReminderDayKey, notifAsked}.
+
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
   Déploiement = push des fichiers statiques tels quels sur GitHub Pages.
