@@ -619,6 +619,45 @@ voir la section identique dans leurs CLAUDE.md respectifs.
   gratitude: [str, str, str], proud: [str, str, str], updatedAt}],
   reminderEnabled, reminderTime, lastReminderDayKey, notifAsked}.
 
+## Atytap (compteurs à appui, usage libre)
+- Bouton 👆 dans l'en-tête d'atyclock.html (entre le titre et 🏡) —
+  demandé explicitement par l'utilisateur pour un usage générique
+  ("un peu pour n'importe quel usage" : envie, prise de médicament,
+  cigarette, verre d'eau…), pas de fonctionnalité dédiée à un seul cas.
+  Vit entièrement dans atyclock.html/atyclock.js (pas de nouveau
+  fichier ni de bouton dans l'en-tête d'index.html) : contrairement aux
+  autres sous-fonctionnalités du fichier, aucun rappel programmé n'est
+  nécessaire en arrière-plan, donc pas besoin de tourner sur
+  index.html.
+- Interaction : appui court sur 👆 enregistre l'heure sur le compteur
+  actif (vibration + léger flash du bouton) ; appui long (500 ms,
+  même logique d'annulation sur mouvement > 10px que les autres appuis
+  longs du projet) ouvre une feuille "👆 Atytap" en bas d'écran listant
+  les compteurs.
+- Compteurs multiples et renommables (pas un seul compteur global) :
+  chaque compteur a un nom libre (ex : "Envie de fumer"), un seul est
+  "actif" à la fois (celui qui reçoit les appuis courts du bouton
+  principal — bascule via le bouton "Activer"/"● Actif" dans la
+  feuille). "+ Nouveau compteur" en crée un autre à tout moment ; le
+  premier appui, s'il n'existe encore aucun compteur, en crée un par
+  défaut ("Compteur") sans dialogue — zéro friction, renommable
+  ensuite. Suppression d'un compteur sans confirmation dramatique
+  (cohérent avec le reste du projet : véhicules d'Atymemo, abandon
+  d'un Boost…), l'historique de ce compteur est perdu avec.
+- Synthèse de fréquence (`synthesisFor`) : total de taps, temps écoulé
+  depuis le dernier, intervalle moyen entre le premier et le dernier
+  tap (`(dernier - premier) / (nombre - 1)`, dès 2 taps), et nombre du
+  jour — volontairement une moyenne simple sur toute l'historique du
+  compteur plutôt qu'une vraie analyse statistique, pour rester lisible
+  d'un coup d'œil.
+- Détail ("▸ Voir le détail", repliée par défaut, par compteur) :
+  liste chronologique inversée des heures exactes de chaque tap,
+  groupée par jour ("Aujourd'hui", "Hier", puis date complète),
+  plafonnée aux 200 taps les plus récents à l'affichage (pas de
+  perte de données, juste un plafond de rendu).
+- Données : localStorage clé "atytap-v1", {counters: [{id, name,
+  createdAt, taps: [timestamp, ...]}], activeCounterId}.
+
 ## Architecture — contraintes strictes
 - Vanilla JS uniquement. Aucun framework, aucun bundler, aucun build.
   Déploiement = push des fichiers statiques tels quels sur GitHub Pages.

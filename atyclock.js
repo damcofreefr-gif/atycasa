@@ -1164,6 +1164,234 @@
     if (astate.googleConnected) openGcalSection();
   }
 
+  // ---------- Atytap — compteurs à appui (atyclock.html uniquement) ----------
+  // Petit bouton générique : appui court = enregistre l'heure sur le
+  // compteur actif (envie, prise, verre d'eau… n'importe quoi, renommé
+  // librement), appui long = récap + synthèse de fréquence. Stockage à
+  // part (atytap-v1) plutôt que dans atyclock-v1, comme les autres
+  // sous-fonctionnalités du fichier.
+  const TAP_STORAGE_KEY = "atytap-v1";
+  function loadTapState() {
+    try {
+      const raw = localStorage.getItem(TAP_STORAGE_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (Array.isArray(d.counters)) return d;
+      }
+    } catch (e) {
+      console.error("Atytap : chargement impossible", e);
+    }
+    return { counters: [], activeCounterId: null };
+  }
+  let tstate = loadTapState();
+  function saveTapState() {
+    try {
+      localStorage.setItem(TAP_STORAGE_KEY, JSON.stringify(tstate));
+    } catch (e) {
+      console.error("Atytap : sauvegarde impossible", e);
+    }
+  }
+  function ensureActiveCounter() {
+    if (!tstate.counters.length) {
+      const c = { id: uid(), name: "Compteur", createdAt: Date.now(), taps: [] };
+      tstate.counters.push(c);
+      tstate.activeCounterId = c.id;
+    } else if (!tstate.activeCounterId || !tstate.counters.some((c) => c.id === tstate.activeCounterId)) {
+      tstate.activeCounterId = tstate.counters[0].id;
+    }
+    return tstate.counters.find((c) => c.id === tstate.activeCounterId);
+  }
+  function flashTapButton() {
+    const btn = $("btnTap");
+    if (!btn) return;
+    btn.classList.add("flash");
+    setTimeout(() => btn.classList.remove("flash"), 400);
+  }
+  function logTap() {
+    const counter = ensureActiveCounter();
+    counter.taps.push(Date.now());
+    saveTapState();
+    vibrate(15);
+    flashTapButton();
+  }
+  function addTapCounter() {
+    const c = { id: uid(), name: "Compteur " + (tstate.counters.length + 1), createdAt: Date.now(), taps: [] };
+    tstate.counters.push(c);
+    tstate.activeCounterId = c.id;
+    saveTapState();
+    renderTapCounters();
+  }
+  function formatDuration(ms) {
+    const totalMin = Math.max(0, Math.round(ms / 60000));
+    if (totalMin < 1) return "< 1 min";
+    if (totalMin < 60) return `${totalMin} min`;
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
+  }
+  // Fréquence = intervalle moyen entre le premier et le dernier tap —
+  // simple et lisible, plutôt qu'une vraie analyse statistique.
+  function synthesisFor(counter) {
+    if (!counter.taps.length) return "Pas encore de tap enregistré.";
+    const sorted = counter.taps.slice().sort((a, b) => a - b);
+    const now = Date.now();
+    const last = sorted[sorted.length - 1];
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayCount = sorted.filter((t) => t >= todayStart.getTime()).length;
+    let freqText = "";
+    if (sorted.length >= 2) {
+      const avgInterval = (last - sorted[0]) / (sorted.length - 1);
+      freqText = ` · en moyenne toutes les ${formatDuration(avgInterval)}`;
+    }
+    return `${counter.taps.length} au total · dernier il y a ${formatDuration(now - last)}${freqText} · ${todayCount} aujourd'hui`;
+  }
+  function tapDayLabel(ts) {
+    const tk = todayKey(); // réutilise le helper "jour courant" défini plus haut (agenda)
+    const d = new Date(ts);
+    const dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (dKey === tk) return "Aujourd'hui";
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yKey = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, "0")}-${String(yest.getDate()).padStart(2, "0")}`;
+    if (dKey === yKey) return "Hier";
+    return frenchDayLabel(d);
+  }
+  const tapExpanded = {};
+  function renderTapCounters() {
+    const wrap = $("tapCountersList");
+    wrap.innerHTML = "";
+    tstate.counters.forEach((counter) => {
+      const isActive = counter.id === tstate.activeCounterId;
+      const card = document.createElement("div");
+      card.className = "tap-counter" + (isActive ? " active" : "");
+
+      const head = document.createElement("div");
+      head.className = "tap-counter-head";
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.className = "tap-counter-name";
+      nameInput.maxLength = 30;
+      nameInput.value = counter.name;
+      nameInput.addEventListener("input", () => {
+        counter.name = nameInput.value;
+        saveTapState();
+      });
+      const activeBtn = document.createElement("button");
+      activeBtn.className = "tap-active-btn" + (isActive ? " on" : "");
+      activeBtn.textContent = isActive ? "● Actif" : "Activer";
+      activeBtn.onclick = () => {
+        tstate.activeCounterId = counter.id;
+        saveTapState();
+        renderTapCounters();
+      };
+      const delBtn = document.createElement("button");
+      delBtn.className = "tap-counter-del";
+      delBtn.textContent = "✕";
+      delBtn.setAttribute("aria-label", "Supprimer ce compteur");
+      delBtn.onclick = () => {
+        tstate.counters = tstate.counters.filter((c) => c.id !== counter.id);
+        if (tstate.activeCounterId === counter.id) {
+          tstate.activeCounterId = tstate.counters.length ? tstate.counters[0].id : null;
+        }
+        saveTapState();
+        renderTapCounters();
+      };
+      head.appendChild(nameInput);
+      head.appendChild(activeBtn);
+      head.appendChild(delBtn);
+      card.appendChild(head);
+
+      const synth = document.createElement("div");
+      synth.className = "tap-synthesis";
+      synth.textContent = synthesisFor(counter);
+      card.appendChild(synth);
+
+      if (counter.taps.length) {
+        const toggle = document.createElement("button");
+        toggle.className = "tap-detail-toggle";
+        toggle.textContent = tapExpanded[counter.id] ? "▾ Masquer le détail" : "▸ Voir le détail";
+        toggle.onclick = () => {
+          tapExpanded[counter.id] = !tapExpanded[counter.id];
+          renderTapCounters();
+        };
+        card.appendChild(toggle);
+
+        if (tapExpanded[counter.id]) {
+          const log = document.createElement("div");
+          log.className = "tap-log";
+          const sorted = counter.taps.slice().sort((a, b) => b - a).slice(0, 200);
+          let lastLabel = null;
+          sorted.forEach((ts) => {
+            const label = tapDayLabel(ts);
+            if (label !== lastLabel) {
+              const dayEl = document.createElement("div");
+              dayEl.className = "tap-log-day";
+              dayEl.textContent = label;
+              log.appendChild(dayEl);
+              lastLabel = label;
+            }
+            const timeEl = document.createElement("div");
+            timeEl.className = "tap-log-time";
+            timeEl.textContent = formatClock(new Date(ts));
+            log.appendChild(timeEl);
+          });
+          card.appendChild(log);
+        }
+      }
+
+      wrap.appendChild(card);
+    });
+  }
+  function openTapOverlay() {
+    renderTapCounters();
+    $("tapOverlay").classList.remove("hidden");
+  }
+  function closeTapOverlay() {
+    $("tapOverlay").classList.add("hidden");
+  }
+  // Distingue appui court (log) / appui long (récap), même logique que
+  // les interrupteurs à appui long d'Atyclock/Atymemo : un mouvement >
+  // 10px avant les 500 ms annule (geste de scroll, pas un tap manqué).
+  function bindTapButton() {
+    const btn = $("btnTap");
+    if (!btn) return;
+    const LONG_PRESS_MS = 500;
+    const MOVE_CANCEL_PX = 10;
+    let timer = null;
+    let moved = false;
+    let startX = 0, startY = 0;
+    btn.addEventListener("pointerdown", (e) => {
+      moved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        openTapOverlay();
+      }, LONG_PRESS_MS);
+    });
+    btn.addEventListener("pointermove", (e) => {
+      if (!timer) return;
+      if (Math.abs(e.clientX - startX) > MOVE_CANCEL_PX || Math.abs(e.clientY - startY) > MOVE_CANCEL_PX) {
+        clearTimeout(timer);
+        timer = null;
+        moved = true;
+      }
+    });
+    btn.addEventListener("pointerup", () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+        if (!moved) logTap();
+      }
+    });
+    btn.addEventListener("pointercancel", () => {
+      clearTimeout(timer);
+      timer = null;
+    });
+  }
+
   renderZoneContext();
   renderNow();
   renderTarget();
@@ -1203,6 +1431,10 @@
       };
     }
   });
+  $("btnTapClose").onclick = closeTapOverlay;
+  $("tapOverlay").onclick = (e) => { if (e.target === $("tapOverlay")) closeTapOverlay(); };
+  $("btnTapAdd").onclick = addTapCounter;
+  bindTapButton();
   bindProgramButton();
   bindStatusRow();
   bindSoundButton();

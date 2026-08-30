@@ -222,6 +222,54 @@
     }
     .gcal-empty { font-size: 12.5px; opacity: 0.55; text-align: center; padding: 10px 0; }
 
+    /* ---------- Atytap ---------- */
+    .tap-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 8px 12px; font-size: 16px;
+    }
+    .tap-btn.flash { border-color: var(--accent); }
+    .tap-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 80;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .tap-sheet {
+      width: 100%; max-width: 440px; max-height: 82vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      background: var(--surface2); border-radius: 20px 20px 0 0; padding: 16px 18px calc(16px + env(safe-area-inset-bottom));
+      box-shadow: 0 -12px 40px rgba(0,0,0,0.5);
+    }
+    .tap-sheet-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .tap-sheet-title { flex: 1; font-weight: 800; font-size: 17px; }
+    .tap-sheet-close {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 10px; padding: 6px 10px; font-size: 14px;
+    }
+    .tap-hint { font-size: 12px; opacity: 0.6; line-height: 1.5; margin: 6px 0 14px; }
+    .tap-counter {
+      background: var(--surface); border-radius: 14px; padding: 12px; margin-bottom: 10px;
+    }
+    .tap-counter.active { border: 1px solid var(--accent); }
+    .tap-counter-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .tap-counter-name {
+      flex: 1; min-width: 0; padding: 7px 9px; border-radius: 9px; border: 1px solid var(--border);
+      background: var(--bg1); color: var(--text); font-size: 14px; font-weight: 700;
+    }
+    .tap-active-btn {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 9px; padding: 6px 10px; font-size: 12px; font-weight: 700; flex-shrink: 0; opacity: 0.7;
+    }
+    .tap-active-btn.on { border-color: var(--accent); color: var(--accent); opacity: 1; background: rgba(91,227,169,0.1); }
+    .tap-counter-del { background: transparent; border: none; color: var(--text); opacity: 0.5; font-size: 15px; padding: 4px 6px; flex-shrink: 0; }
+    .tap-synthesis { font-size: 12.5px; opacity: 0.8; line-height: 1.5; margin-bottom: 6px; }
+    .tap-detail-toggle { font-size: 11.5px; opacity: 0.6; background: transparent; border: none; color: var(--accent); padding: 2px 0; }
+    .tap-log { margin-top: 8px; }
+    .tap-log-day { font-size: 11px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.5px; margin: 8px 0 3px; }
+    .tap-log-day:first-child { margin-top: 0; }
+    .tap-log-time { font-size: 12.5px; opacity: 0.85; font-variant-numeric: tabular-nums; padding: 2px 0; }
+    .tap-add-btn {
+      width: 100%; min-height: 40px; border-radius: 12px; border: 1px dashed var(--border);
+      background: transparent; color: var(--text); font-size: 13px; opacity: 0.8; margin-top: 4px;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .offset-badge { transition: none; }
     }
@@ -230,7 +278,20 @@
 <body>
   <div class="header">
     <div class="h-title">🕐 Atyclock</div>
+    <button class="tap-btn" id="btnTap" aria-label="Atytap — appui court pour enregistrer, appui long pour voir le récap" title="Appui court : enregistrer. Appui long : récap.">👆</button>
     <button class="back-btn" id="btnBack" aria-label="Retour à l'accueil">🏡</button>
+  </div>
+
+  <div class="tap-overlay hidden" id="tapOverlay">
+    <div class="tap-sheet">
+      <div class="tap-sheet-header">
+        <div class="tap-sheet-title">👆 Atytap</div>
+        <button class="tap-sheet-close" id="btnTapClose">✕</button>
+      </div>
+      <div class="tap-hint">Appui court sur 👆 pour enregistrer un tap sur le compteur actif. Un compteur par usage (envie, prise, verre d'eau…) — renomme-le comme tu veux.</div>
+      <div id="tapCountersList"></div>
+      <button class="tap-add-btn" id="btnTapAdd">+ Nouveau compteur</button>
+    </div>
   </div>
 
   <div class="card">
